@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
+const LARGURA_FECHADA = 56;
 const LARGURA_ABERTA = 240;
 
 const secoes = [
@@ -22,105 +23,138 @@ const secoes = [
   },
 ];
 
-export default function Sidebar({ ativo = 'home', aoSelecionar, aberta = true, aoToggle }) {
-  const animLargura = useRef(new Animated.Value(aberta ? LARGURA_ABERTA : 0)).current;
-  const animOpacidade = useRef(new Animated.Value(aberta ? 1 : 0)).current;
+export default function Sidebar({ ativo = 'home', aoSelecionar }) {
+  const animLargura = useRef(new Animated.Value(LARGURA_FECHADA)).current;
+  const animOpacidade = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
+  function aoEntrar() {
     Animated.parallel([
       Animated.timing(animLargura, {
-        toValue: aberta ? LARGURA_ABERTA : 0,
-        duration: 260,
+        toValue: LARGURA_ABERTA,
+        duration: 240,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }),
       Animated.timing(animOpacidade, {
-        toValue: aberta ? 1 : 0,
-        duration: aberta ? 260 : 160,
+        toValue: 1,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
         useNativeDriver: false,
       }),
     ]).start();
-  }, [aberta]);
+  }
+
+  function aoSair() {
+    Animated.parallel([
+      Animated.timing(animLargura, {
+        toValue: LARGURA_FECHADA,
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(animOpacidade, {
+        toValue: 0,
+        duration: 140,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }
 
   return (
-    <Animated.View style={[estilos.container, { width: animLargura }]}>
-      <Animated.View style={[estilos.interno, { opacity: animOpacidade }]}>
-
-        {/* Cabeçalho — clicável para ir à home */}
-        <Pressable style={estilos.cabecalho} onPress={() => aoSelecionar?.('home')}>
+    <Animated.View
+      style={[estilos.container, { width: animLargura }]}
+      onMouseEnter={aoEntrar}
+      onMouseLeave={aoSair}
+    >
+      {/* Cabeçalho */}
+      <Pressable style={estilos.linha} onPress={() => aoSelecionar?.('home')}>
+        <View style={estilos.iconeSlot}>
           <View style={estilos.logoCirculo}>
             <View style={estilos.logoPonto} />
           </View>
-          <View style={estilos.cabecalhoTexto}>
-            <Text style={estilos.cabecalhoNome}>Orbital Academy</Text>
-            <View style={estilos.statusBadge}>
-              <View style={estilos.statusPonto} />
-              <Text style={estilos.statusTexto}>Missão Agro · ativa</Text>
-            </View>
+        </View>
+        <Animated.View style={[estilos.textoSlot, { opacity: animOpacidade }]}>
+          <Text style={estilos.cabecalhoNome} numberOfLines={1}>Orbital Academy</Text>
+          <Text style={estilos.cabecalhoSub} numberOfLines={1}>Engenharia de Software · 3º sem</Text>
+          <View style={estilos.statusBadge}>
+            <View style={estilos.statusPonto} />
+            <Text style={estilos.statusTexto} numberOfLines={1}>Missão Agro · ativa</Text>
           </View>
-          {/* Botão toggle */}
-          <Pressable onPress={aoToggle} style={estilos.botaoToggle} hitSlop={8}>
-            <Ionicons name="chevron-back-outline" size={16} color="#475569" />
-          </Pressable>
-        </Pressable>
+        </Animated.View>
+      </Pressable>
 
-        <View style={estilos.divisor} />
+      <View style={estilos.divisor} />
 
-        {/* Seções de navegação */}
-        <View style={estilos.nav}>
-          {secoes.map((secao) => (
-            <View key={secao.rotulo} style={estilos.secao}>
+      {/* Navegação */}
+      <View style={estilos.nav}>
+        {secoes.map((secao) => (
+          <View key={secao.rotulo} style={estilos.secao}>
+
+            {/* Rótulo da seção — alinhado com os textos */}
+            <Animated.View style={[estilos.secaoRotuloRow, { opacity: animOpacidade }]}>
+              <View style={estilos.iconeSlot} />
               <Text style={estilos.secaoRotulo}>{secao.rotulo}</Text>
-              {secao.itens.map((item) => {
-                const estaAtivo = item.chave === ativo;
-                return (
-                  <Pressable
-                    key={item.chave}
-                    onPress={() => aoSelecionar?.(item.chave)}
-                    style={({ pressed }) => [
-                      estilos.item,
-                      estaAtivo && estilos.itemAtivo,
-                      pressed && estilos.itemPressed,
-                    ]}
-                  >
-                    {estaAtivo && <View style={estilos.bordaAtiva} />}
+            </Animated.View>
+
+            {secao.itens.map((item) => {
+              const estaAtivo = item.chave === ativo;
+              return (
+                <Pressable
+                  key={item.chave}
+                  onPress={() => aoSelecionar?.(item.chave)}
+                  style={({ pressed }) => [
+                    estilos.linha,
+                    estilos.linhaNave,
+                    estaAtivo && estilos.linhaAtiva,
+                    pressed && estilos.linhaPressed,
+                  ]}
+                >
+                  {estaAtivo && <View style={estilos.bordaAtiva} />}
+
+                  {/* Ícone — sempre visível */}
+                  <View style={estilos.iconeSlot}>
                     <View style={[estilos.iconeContainer, estaAtivo && estilos.iconeContainerAtivo]}>
                       <Ionicons
                         name={item.icone}
-                        size={18}
+                        size={17}
                         color={estaAtivo ? '#208AEF' : '#64748B'}
                       />
                     </View>
-                    <View style={estilos.itemTexto}>
-                      <Text style={[estilos.itemTitulo, estaAtivo && estilos.itemTituloAtivo]}>
-                        {item.titulo}
-                      </Text>
-                      <Text style={estilos.itemSubtitulo}>{item.subtitulo}</Text>
-                    </View>
-                    {item.badge != null && (
-                      <View style={estilos.badge}>
-                        <Text style={estilos.badgeTexto}>{item.badge}</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-        </View>
+                  </View>
 
-        {/* Rodapé */}
-        <View style={estilos.rodape}>
-          <View style={estilos.divisor} />
-          <Pressable style={estilos.botaoLogin}>
-            <Ionicons name="log-in-outline" size={16} color="#64748B" />
-            <View style={estilos.loginTexto}>
-              <Text style={estilos.loginTitulo}>Faça login</Text>
-              <Text style={estilos.loginSub}>Para acessar sua conta</Text>
-            </View>
-          </Pressable>
-        </View>
+                  {/* Texto — aparece no hover */}
+                  <Animated.View style={[estilos.textoSlot, { opacity: animOpacidade }]}>
+                    <Text style={[estilos.itemTitulo, estaAtivo && estilos.itemTituloAtivo]} numberOfLines={1}>
+                      {item.titulo}
+                    </Text>
+                    <Text style={estilos.itemSubtitulo} numberOfLines={1}>{item.subtitulo}</Text>
+                  </Animated.View>
 
-      </Animated.View>
+                  {item.badge != null && (
+                    <Animated.View style={[estilos.badge, { opacity: animOpacidade }]}>
+                      <Text style={estilos.badgeTexto}>{item.badge}</Text>
+                    </Animated.View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+
+      {/* Rodapé */}
+      <View style={estilos.rodape}>
+        <View style={estilos.divisor} />
+        <Pressable style={estilos.linha}>
+          <View style={estilos.iconeSlot}>
+            <Ionicons name="log-in-outline" size={18} color="#64748B" />
+          </View>
+          <Animated.View style={[estilos.textoSlot, { opacity: animOpacidade }]}>
+            <Text style={estilos.loginTitulo} numberOfLines={1}>Faça login</Text>
+            <Text style={estilos.loginSub} numberOfLines={1}>Para acessar sua conta</Text>
+          </Animated.View>
+        </Pressable>
+      </View>
     </Animated.View>
   );
 }
@@ -131,21 +165,53 @@ const estilos = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#ffffff0D',
     overflow: 'hidden',
-  },
-  interno: {
-    width: LARGURA_ABERTA,
-    flex: 1,
     flexDirection: 'column',
   },
 
-  // Cabeçalho
-  cabecalho: {
+  // Layout de linha: ícone fixo + texto animado
+  linha: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 16,
-    paddingBottom: 14,
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    position: 'relative',
   },
+  linhaNave: {
+    paddingVertical: 7,
+  },
+  linhaAtiva: {
+    backgroundColor: '#ffffff08',
+  },
+  linhaPressed: {
+    backgroundColor: '#ffffff05',
+  },
+  bordaAtiva: {
+    position: 'absolute',
+    left: 0,
+    top: 4,
+    bottom: 4,
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: '#208AEF',
+  },
+
+  // Slot do ícone — largura fixa para alinhar sempre
+  iconeSlot: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginRight: 10,
+  },
+
+  // Slot do texto — ocupa o restante
+  textoSlot: {
+    flex: 1,
+    gap: 1,
+    overflow: 'hidden',
+  },
+
+  // Logo
   logoCirculo: {
     width: 32,
     height: 32,
@@ -154,7 +220,6 @@ const estilos = StyleSheet.create({
     borderColor: '#334155',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
   },
   logoPonto: {
     width: 8,
@@ -163,10 +228,8 @@ const estilos = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#94A3B8',
   },
-  cabecalhoTexto: {
-    flex: 1,
-    gap: 2,
-  },
+
+  // Cabeçalho
   cabecalhoNome: {
     color: '#F1F5F9',
     fontSize: 14,
@@ -180,7 +243,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 4,
+    marginTop: 2,
   },
   statusPonto: {
     width: 5,
@@ -192,10 +255,6 @@ const estilos = StyleSheet.create({
     color: '#64748B',
     fontSize: 11,
   },
-  botaoToggle: {
-    marginTop: 2,
-    padding: 2,
-  },
 
   // Divisor
   divisor: {
@@ -206,43 +265,24 @@ const estilos = StyleSheet.create({
   // Navegação
   nav: {
     flex: 1,
-    paddingTop: 8,
-    gap: 16,
+    paddingTop: 4,
+    gap: 12,
   },
-  secao: {
-    gap: 2,
+  secao: { gap: 2 },
+  secaoRotuloRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
   secaoRotulo: {
     color: '#334155',
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 0.8,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
   },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    gap: 10,
-    position: 'relative',
-  },
-  itemAtivo: {
-    backgroundColor: '#ffffff08',
-  },
-  itemPressed: {
-    backgroundColor: '#ffffff05',
-  },
-  bordaAtiva: {
-    position: 'absolute',
-    left: 0,
-    top: 4,
-    bottom: 4,
-    width: 3,
-    borderRadius: 2,
-    backgroundColor: '#208AEF',
-  },
+
+  // Ícone container
   iconeContainer: {
     width: 32,
     height: 32,
@@ -257,23 +297,13 @@ const estilos = StyleSheet.create({
     borderColor: '#208AEF30',
     backgroundColor: '#208AEF10',
   },
-  itemTexto: {
-    flex: 1,
-    gap: 1,
-  },
-  itemTitulo: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  itemTituloAtivo: {
-    color: '#F1F5F9',
-    fontWeight: '600',
-  },
-  itemSubtitulo: {
-    color: '#334155',
-    fontSize: 11,
-  },
+
+  // Texto dos itens
+  itemTitulo: { color: '#94A3B8', fontSize: 13, fontWeight: '500' },
+  itemTituloAtivo: { color: '#F1F5F9', fontWeight: '600' },
+  itemSubtitulo: { color: '#334155', fontSize: 11 },
+
+  // Badge
   badge: {
     backgroundColor: '#1E293B',
     borderRadius: 6,
@@ -281,31 +311,12 @@ const estilos = StyleSheet.create({
     paddingVertical: 2,
     borderWidth: 1,
     borderColor: '#ffffff10',
+    marginLeft: 4,
   },
-  badgeTexto: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-  },
+  badgeTexto: { color: '#94A3B8', fontSize: 11, fontWeight: '600' },
 
   // Rodapé
   rodape: {},
-  botaoLogin: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 16,
-  },
-  loginTexto: {
-    gap: 1,
-  },
-  loginTitulo: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  loginSub: {
-    color: '#334155',
-    fontSize: 11,
-  },
+  loginTitulo: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
+  loginSub: { color: '#334155', fontSize: 11 },
 });
