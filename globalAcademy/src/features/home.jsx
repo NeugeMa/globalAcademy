@@ -12,6 +12,31 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../components/sidebar';
+import { fonts } from '../constants/fonts';
+
+const imgParallax = require('../../assets/nasa-Q1p7bh3SHj8-unsplash.jpg');
+const imgPersonas = require('../../assets/premium_photo-1679756099079-84d8ab833a3f.avif');
+
+const personasData = [
+  {
+    id: 'produtor',
+    rotulo: 'Persona 01',
+    titulo: 'Pequeno produtor rural',
+    descricao: 'Vê a lavoura do chão, não do céu. Sabe que tem um problema mas não sabe em qual área agir primeiro com os recursos que tem. \n\nO satélite está disponível, mas o caminho entre o dado e a ação ainda é longo demais para quem não é especialista.',
+  },
+  {
+    id: 'defesa',
+    rotulo: 'Persona 02',
+    titulo: 'Equipe da Defesa Civil municipal',
+    descricao: 'Precisa priorizar risco com equipe e tempo contados. Um município pequeno não tem analista de dados espaciais. \n\n E sim um gestor que precisa decidir em minutos onde mandar a equipe e o equipamento disponível.',
+  },
+  {
+    id: 'saude',
+    rotulo: 'Persona 03',
+    titulo: 'Agente de saúde em campo',
+    descricao: 'Decide rotas e recursos onde o dado raramente chega. O acompanhamento de áreas de risco hídrico ou vetorial por satélite poderia guiar a priorização, mas a capacidade de interpretar e agir sobre esse dado está fora do alcance operacional atual.',
+  },
+];
 
 const etapas = [
   { numero: '01', rotulo: 'Ver' },
@@ -71,11 +96,86 @@ function Estrela({ top, left, tamanho, duracao, atraso }) {
   );
 }
 
-const secoes = [];
+const etapasDetalhadas = [
+  { numero: '01', rotulo: 'Ver', descricao: 'O satélite enxerga o que ninguém em campo alcança. Vegetação, umidade do solo e temperatura de superfície, todo dia.' },
+  { numero: '02', rotulo: 'Prever', descricao: 'O modelo de ML cruza esses sinais e estima onde o risco vai crescer antes de virar perda.' },
+  { numero: '03', rotulo: 'Validar', descricao: 'A leitura orbital encontra a checagem em campo. O número deixa de ser palpite e vira confiança.' },
+  { numero: '04', rotulo: 'Decidir', descricao: 'Sob recurso limitado, o operador escolhe qual área atender primeiro. \nÉ aqui que o dado vira decisão.' },
+  { numero: '05', rotulo: 'Otimizar', descricao: 'O motor calcula a melhor alocação de equipe, insumo e tempo para o maior impacto possível.' },
+  { numero: '06', rotulo: 'Agir', descricao: 'A missão sai do painel e vira ação no território, alguém vai até a área certa fazer o que importa.' },
+  { numero: '07', rotulo: 'Medir', descricao: 'O resultado volta como dado, fecha o ciclo e ensina a próxima decisão a ser melhor.' },
+];
 
-function SecaoPrincipal({ atraso = 0 }) {
+const slidesCarrossel = etapasDetalhadas.map((e) => ({
+  id: e.numero,
+  titulo: e.rotulo,
+  descricao: e.descricao,
+}));
+
+const CARD_W = 340;
+const CARD_GAP = 16;
+
+function CarrosselNav({ slides, indice, irPara }) {
+  return (
+    <View style={estilos.carrosselControles}>
+      <Pressable
+        style={[estilos.carrosselBtnCirculo, indice === 0 && estilos.carrosselBtnDesativado]}
+        onPress={() => irPara(indice - 1)}
+      >
+        <Ionicons name="chevron-back-outline" size={16} color={indice === 0 ? '#334155' : '#94A3B8'} />
+      </Pressable>
+      <Pressable
+        style={[estilos.carrosselBtnCirculo, estilos.carrosselBtnAtivo, indice === slides.length - 1 && estilos.carrosselBtnDesativado]}
+        onPress={() => irPara(indice + 1)}
+      >
+        <Ionicons name="chevron-forward-outline" size={16} color={indice === slides.length - 1 ? '#334155' : '#F8FAFC'} />
+      </Pressable>
+      <View style={estilos.carrosselPontos}>
+        {slides.map((_, i) => (
+          <Pressable key={i} onPress={() => irPara(i)}>
+            <View style={[estilos.carrosselPonto, i === indice && estilos.carrosselPontoAtivo]} />
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function CarrosselCards({ slides, indice, animX }) {
+  return (
+    <View style={estilos.carrosselOverflow}>
+      <Animated.View style={[estilos.carrosselTrilha, { transform: [{ translateX: animX }] }]}>
+        {slides.map((slide, i) => (
+          <View key={slide.id} style={[estilos.carrosselCard, i === indice && estilos.carrosselCardAtivo]}>
+            <View style={estilos.carrosselCardBody} />
+            <View style={estilos.carrosselCardFooter}>
+              <Text style={estilos.carrosselCardTitulo}>{slide.titulo}</Text>
+              <Text style={estilos.carrosselCardDescricao}>{slide.descricao}</Text>
+            </View>
+          </View>
+        ))}
+      </Animated.View>
+    </View>
+  );
+}
+
+function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
   const animY = useRef(new Animated.Value(24)).current;
   const animOp = useRef(new Animated.Value(0)).current;
+  const [indiceCarrossel, setIndiceCarrossel] = useState(0);
+  const animXCarrossel = useRef(new Animated.Value(0)).current;
+
+  function irParaSlide(novoIndice) {
+    const total = slidesCarrossel.length;
+    const idx = ((novoIndice % total) + total) % total;
+    Animated.timing(animXCarrossel, {
+      toValue: idx * -(CARD_W + CARD_GAP),
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+    setIndiceCarrossel(idx);
+  }
 
   useEffect(() => {
     Animated.parallel([
@@ -85,120 +185,46 @@ function SecaoPrincipal({ atraso = 0 }) {
   }, []);
 
   return (
-    <Animated.View style={[estilos.secaoPrincipal, { opacity: animOp, transform: [{ translateY: animY }] }]}>
-      <View style={estilos.secaoPrincipalTopo}>
-        <Text style={estilos.secaoPrincipalId}>01</Text>
-        <Text style={estilos.secaoPrincipalRotulo}>RESUMO EXECUTIVO</Text>
+    <Animated.View style={[{ opacity: animOp, transform: [{ translateY: animY }] }, estilos.dossieContainer, { minHeight: alturaJanela }]}>
+
+      {/* Topo da seção */}
+      <View style={estilos.dossieTopo}>
+        <Text style={estilos.dossieRotuloEsquerda}>O QUE É O ORBITAL ACADEMY</Text>
+        <Text style={estilos.dossieRotuloDireita}>01 / DOSSIÊ</Text>
       </View>
 
-      <Text style={estilos.secaoPrincipalTitulo}>O que é o Orbital Academy?</Text>
-
-      <Text style={estilos.secaoPrincipalTexto}>
-        O Orbital Academy combina dado aberto de satélite (NASA, INPE, Copernicus), um modelo de
-        ML que prevê risco e um motor de otimização que decide como alocar recursos limitados.{'\n\n'}
-        É uma plataforma que transforma dado espacial em decisão real — onde você opera uma missão
-        de verdade: o satélite, o modelo, o otimizador. Tudo junto, tudo conectado.
+      {/* Título principal */}
+      <Text style={estilos.dossieTituloGrande}>
+        Dado espacial em decisão real.{'\n'}
+        <Text style={estilos.destaqueCiano}>Sem precisar ser especialista.</Text>
       </Text>
 
-      <View style={estilos.secaoPrincipalGrade}>
-        {[
-          { rotulo: 'Fonte de dados', valor: 'NASA Earthdata · INPE · Copernicus' },
-          { rotulo: 'Tecnologia', valor: 'ML + Otimização' },
-          { rotulo: 'Missão ativa', valor: 'Agro · Defesa Civil · Saúde' },
-          { rotulo: 'Etapas', valor: 'Ver → Prever → Validar → Decidir → Medir' },
-        ].map((item) => (
-          <View key={item.rotulo} style={estilos.gradeItem}>
-            <Text style={estilos.gradeRotulo}>{item.rotulo}</Text>
-            <Text style={estilos.gradeValor}>{item.valor}</Text>
-          </View>
-        ))}
-      </View>
+      {/* Subtítulo */}
+      <Text style={estilos.dossieSubtitulo}>
+        {'O Orbital Academy pega o que a NASA e o INPE já enxergam lá de cima. Risco em lavoura, foco de calor, déficit hídrico e coloca na mão de quem precisa decidir o que fazer com isso!\nUm modelo prevê. Um otimizador aloca. Você opera. O satélite finalmente chega em campo.'}
+      </Text>
 
-      <View style={estilos.tagsRow}>
-        {['NASA Earthdata', 'INPE', 'ML + Otimização', 'Copernicus', 'Decisão espacial'].map((tag) => (
-          <View key={tag} style={estilos.tag}>
-            <Text style={estilos.tagTexto}>{tag}</Text>
-          </View>
-        ))}
-      </View>
-    </Animated.View>
-  );
-}
+      <Text style={estilos.dossieSubtitulo}>
+        {'A plataforma não substitui o especialista técnico: ela torna a capacidade de decidir com dado espacial acessível para qualquer operador, qualquer produtor rural, qualquer equipe de campo que antes ficava de fora desse ciclo por falta de formação específica ou de ferramentas adequadas.'}
+      </Text>
 
-function SecaoAccordion({ id, rotulo, titulo, texto, tags, atraso = 0 }) {
-  const [aberta, setAberta] = useState(false);
-  const animAltura = useRef(new Animated.Value(0)).current;
-  const animOpacidade = useRef(new Animated.Value(0)).current;
-  const animEntrada = useRef(new Animated.Value(20)).current;
-  const animEntradaOp = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(animEntrada, { toValue: 0, duration: 400, delay: atraso, useNativeDriver: true }),
-      Animated.timing(animEntradaOp, { toValue: 1, duration: 400, delay: atraso, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  function alternar() {
-    const abrindo = !aberta;
-    setAberta(abrindo);
-    Animated.parallel([
-      Animated.timing(animAltura, {
-        toValue: abrindo ? 1 : 0,
-        duration: 380,
-        easing: abrindo ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(animOpacidade, {
-        toValue: abrindo ? 1 : 0,
-        duration: abrindo ? 320 : 200,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }
-
-  const alturaConteudo = animAltura.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, tags.length > 0 ? 160 : 110],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        estilos.secaoItem,
-        aberta && estilos.secaoItemAberta,
-        { opacity: animEntradaOp, transform: [{ translateY: animEntrada }] },
-      ]}
-    >
-      <Pressable style={estilos.secaoCabecalho} onPress={alternar}>
-        <View style={estilos.secaoEsquerda}>
-          <Text style={estilos.secaoId}>{id}</Text>
-          <Text style={estilos.secaoRotulo}>{rotulo}</Text>
-        </View>
-        <Text style={[estilos.secaoTitulo]}>{titulo}</Text>
-        <Ionicons
-          name={aberta ? 'chevron-up-outline' : 'chevron-down-outline'}
-          size={16}
-          color="#475569"
-          style={{ marginLeft: 12 }}
-        />
-      </Pressable>
-
-      <Animated.View style={{ height: alturaConteudo, overflow: 'hidden' }}>
-        <Animated.View style={[estilos.secaoCorpo, { opacity: animOpacidade }]}>
-          <Text style={estilos.secaoTexto}>{texto}</Text>
-          {tags.length > 0 && (
-            <View style={estilos.tagsRow}>
-              {tags.map((tag) => (
-                <View key={tag} style={estilos.tag}>
-                  <Text style={estilos.tagTexto}>{tag}</Text>
-                </View>
-              ))}
+      {/* Seção 02 — Como funciona (carrossel) */}
+      <View style={estilos.secao02Layout}>
+        <View style={estilos.secao02Esquerda}>
+          <View style={estilos.dossieCardTopo}>
+            <View style={estilos.dossieCardBadge}>
+              <Text style={estilos.dossieCardBadgeTexto}>02</Text>
             </View>
-          )}
-        </Animated.View>
-      </Animated.View>
+            <Text style={[estilos.dossieCardTitulo, { fontSize: 26, lineHeight: 34 }]}>Como funciona?</Text>
+          </View>
+          <CarrosselNav slides={slidesCarrossel} indice={indiceCarrossel} irPara={irParaSlide} />
+        </View>
+
+        <View style={estilos.secao02Direita}>
+          <CarrosselCards slides={slidesCarrossel} indice={indiceCarrossel} animX={animXCarrossel} />
+        </View>
+      </View>
+
     </Animated.View>
   );
 }
@@ -279,28 +305,94 @@ function ItemEtapa({ numero, rotulo, atraso = 0 }) {
   );
 }
 
+function CardFlip({ persona }) {
+  const animFlip = useRef(new Animated.Value(0)).current;
+
+  const frente = animFlip.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
+  const verso = animFlip.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg'] });
+
+  const hoverProps = Platform.OS === 'web'
+    ? {
+        onMouseEnter: () => Animated.timing(animFlip, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(),
+        onMouseLeave: () => Animated.timing(animFlip, { toValue: 0, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(),
+      }
+    : {};
+
+  return (
+    <View style={estilos.flipContainer} {...hoverProps}>
+      {/* Frente */}
+      <Animated.View style={[estilos.flipFace, { transform: [{ perspective: 1200 }, { rotateY: frente }], backfaceVisibility: 'hidden' }]}>
+        <View>
+          <Text style={estilos.flipRotulo}>{persona.rotulo}</Text>
+          <Text style={estilos.flipTituloFront}>{persona.titulo}</Text>
+        </View>
+        <View style={estilos.flipHintRow}>
+          <Text style={estilos.flipHintTexto}>Ver detalhes</Text>
+          <Ionicons name="arrow-forward-outline" size={13} color="#334155" />
+        </View>
+      </Animated.View>
+
+      {/* Verso */}
+      <Animated.View style={[estilos.flipFace, estilos.flipVerso, { transform: [{ perspective: 1200 }, { rotateY: verso }], backfaceVisibility: 'hidden', justifyContent: 'center' }]}>
+        <Text style={estilos.flipDescricao}>{persona.descricao}</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+function SecaoTese() {
+  return (
+    <View style={estilos.secao03Wrapper}>
+
+      {/* Topo */}
+      <View style={estilos.dossieTopo}>
+        <Text style={estilos.dossieRotuloEsquerda}>TESE E RESULTADO</Text>
+        <Text style={estilos.dossieRotuloDireita}>03 / TESE</Text>
+      </View>
+
+      <View style={estilos.dossieCardTopo}>
+        <View style={estilos.dossieCardBadge}>
+          <Text style={estilos.dossieCardBadgeTexto}>03</Text>
+        </View>
+        <Text style={[estilos.dossieCardTitulo, { fontSize: 26, lineHeight: 34 }]}>Por que isso importa?</Text>
+      </View>
+      <Text style={estilos.teseBodyText}>
+        Dado espacial é abundante, gratuito e cada vez mais preciso. {'\n'}O que ainda é escasso é a capacidade de transformar esse dado em ação sob recurso limitado, em tempo real, por pessoas que não têm formação em sensoriamento remoto.
+      </Text>
+
+
+      {/* Personas */}
+      <View style={estilos.personasBlocos}>
+        <CardFlip persona={personasData[0]} />
+        <CardFlip persona={personasData[1]} />
+        <View style={estilos.personaFotoBloco}>
+          <Animated.Image source={imgPersonas} style={estilos.personaFotoImg} />
+        </View>
+        <CardFlip persona={personasData[2]} />
+      </View>
+
+    </View>
+  );
+}
+
 export default function Home() {
   const [ativo, setAtivo] = useState('home');
-  const { width, height } = useWindowDimensions();
-  const eMobile = width < 768;
+  const { height } = useWindowDimensions();
   const mostrarHome = ativo === 'home';
   const scrollRef = useRef(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   return (
     <View style={estilos.container}>
-      {!eMobile && (
-        <Sidebar ativo={ativo} aoSelecionar={setAtivo} />
-      )}
+      <Sidebar ativo={ativo} aoSelecionar={setAtivo} />
 
       <View style={estilos.conteudo}>
-        {/* Fundo espacial */}
         <View style={estilos.fundoEspacial} pointerEvents="none">
           {estrelas.map((e) => (
             <Estrela key={e.id} {...e} />
           ))}
         </View>
 
-        {/* Cabeçalho */}
         <View style={estilos.cabecalho}>
           <View style={estilos.cabecalhoEsquerda}>
             <View style={estilos.badgePill}>
@@ -308,26 +400,28 @@ export default function Home() {
               <Text style={estilos.badgeTexto}>Global Solution FIAP · Space Connect · 2026.1</Text>
             </View>
           </View>
-          <Pressable style={estilos.botaoEntrar}>
-            <Text style={estilos.botaoEntrarTexto}>Entrar →</Text>
-          </Pressable>
         </View>
 
         {mostrarHome ? (
-          <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          <ScrollView
+            ref={scrollRef}
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+            scrollEventThrottle={16}
+          >
 
-            {/* Hero — ocupa 100% da tela */}
             <View style={[estilos.hero, { minHeight: height }]}>
-              <Text style={[estilos.titulo, eMobile && estilos.tituloMobile]}>
+              <Text style={estilos.titulo}>
                 Operar é aprender.{'\n'}Decidir é o impacto.
               </Text>
 
-              <Text style={[estilos.subtitulo, eMobile && estilos.subtituloMobile]}>
+              <Text style={estilos.subtitulo}>
                 O Orbital Academy é uma plataforma que ensina qualquer pessoa a
                 transformar dado espacial em decisão real!
               </Text>
 
-              <View style={[estilos.barraEtapas, eMobile && estilos.barraEtapasMobile]}>
+              <View style={estilos.barraEtapas}>
                 {etapas.map((etapa, indice) => (
                   <View key={etapa.numero} style={estilos.etapaGrupo}>
                     <ItemEtapa numero={etapa.numero} rotulo={etapa.rotulo} atraso={indice * 80} />
@@ -341,13 +435,40 @@ export default function Home() {
               <SetaScroll aoClicar={() => scrollRef.current?.scrollTo({ y: height, animated: true })} />
             </View>
 
-            {/* Seções — abaixo do fold */}
-            <View style={[estilos.accordion, eMobile && estilos.accordionMobile]}>
-              <SecaoPrincipal atraso={0} />
-              {secoes.map((s, i) => (
-                <SecaoAccordion key={s.id} {...s} atraso={80 + i * 80} />
-              ))}
+            <View style={estilos.secao01Wrapper}>
+              <SecaoPrincipal atraso={0} alturaJanela={height} />
             </View>
+
+            {/* Imagem — aparece abaixo da seção 02 */}
+            <View style={estilos.parallaxContainer}>
+              <Animated.Image
+                source={imgParallax}
+                style={estilos.parallaxImg}
+              />
+              {/* Fade superior */}
+              <View
+                pointerEvents="none"
+                style={[
+                  estilos.parallaxFadeTopo,
+                  Platform.OS === 'web' && {
+                    background: 'linear-gradient(to bottom, #050810 0%, transparent 100%)',
+                  },
+                ]}
+              />
+              {/* Fade inferior */}
+              <View
+                pointerEvents="none"
+                style={[
+                  estilos.parallaxFadeBase,
+                  Platform.OS === 'web' && {
+                    background: 'linear-gradient(to bottom, transparent 0%, #050810 100%)',
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Seção 03 — Tese e Resultado */}
+            <SecaoTese />
 
           </ScrollView>
         ) : (
@@ -373,7 +494,6 @@ const estilos = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Fundo espacial
   fundoEspacial: {
     position: 'absolute',
     top: 0,
@@ -381,18 +501,33 @@ const estilos = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  
-  arcoWrapper: {
+  parallaxContainer: {
+    height: 560,
+    overflow: 'hidden',
+    marginTop: 80,
+    position: 'relative',
+  },
+  parallaxImg: {
+    width: '100%',
+    height: 720,
+    resizeMode: 'cover',
+    marginTop: -80,
+  },
+  parallaxFadeTopo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 180,
+  },
+  parallaxFadeBase: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 320,
-    alignItems: 'center',
-    overflow: 'hidden',
+    height: 220,
   },
 
-  // Cabeçalho
   cabecalho: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -406,16 +541,6 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  botaoAbrirSidebar: {
-    padding: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ffffff15',
-  },
-  botaoAbrirTexto: {
-    color: '#64748B',
-    fontSize: 16,
   },
   badgePill: {
     flexDirection: 'row',
@@ -436,21 +561,9 @@ const estilos = StyleSheet.create({
   badgeTexto: {
     color: '#94A3B8',
     fontSize: 12,
-  },
-  botaoEntrar: {
-    borderWidth: 1,
-    borderColor: '#ffffff30',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  botaoEntrarTexto: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.body,
   },
 
-  // Hero
   hero: {
     flexGrow: 1,
     alignItems: 'center',
@@ -459,52 +572,31 @@ const estilos = StyleSheet.create({
     paddingVertical: 40,
     zIndex: 5,
   },
-  badgePillCentral: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#ffffff20',
-    borderRadius: 100,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    marginBottom: 32,
-  },
   titulo: {
     color: '#F8FAFC',
     fontSize: 56,
-    fontWeight: '800',
+    fontFamily: fonts.titleBlack,
     textAlign: 'center',
     lineHeight: 64,
     letterSpacing: -1,
     marginBottom: 24,
   },
-  tituloMobile: {
-    fontSize: 36,
-    lineHeight: 44,
-  },
   subtitulo: {
     color: '#64748B',
     fontSize: 16,
+    fontFamily: fonts.body,
     textAlign: 'center',
     lineHeight: 26,
     maxWidth: 540,
     marginBottom: 60,
   },
-  subtituloMobile: {
-    fontSize: 14,
-  },
 
-  // Etapas — sem container/borda
   barraEtapas: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 4,
-  },
-  barraEtapasMobile: {
-    gap: 2,
   },
   etapaGrupo: {
     flexDirection: 'row',
@@ -527,167 +619,291 @@ const estilos = StyleSheet.create({
   etapaRotulo: {
     color: '#CBD5E1',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
   },
   etapaSeta: {
     color: '#334155',
     fontSize: 12,
   },
 
-  // Seta scroll
   setaContainer: {
     marginTop: 16,
     alignItems: 'center',
   },
 
-  // Seção principal (01)
-  secaoPrincipal: {
-    borderWidth: 1,
-    borderColor: '#208AEF20',
-    borderRadius: 14,
-    backgroundColor: '#0D1420',
-    padding: 28,
-    gap: 20,
-  },
-  secaoPrincipalTopo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  secaoPrincipalId: {
-    color: '#208AEF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  secaoPrincipalRotulo: {
-    color: '#334155',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  secaoPrincipalTitulo: {
-    color: '#F1F5F9',
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 30,
-  },
-  secaoPrincipalTexto: {
-    color: '#64748B',
-    fontSize: 14,
-    lineHeight: 24,
-  },
-  secaoPrincipalGrade: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 4,
-  },
-  gradeItem: {
-    flex: 1,
-    minWidth: 180,
-    gap: 4,
-    borderLeftWidth: 2,
-    borderLeftColor: '#208AEF40',
-    paddingLeft: 12,
-  },
-  gradeRotulo: {
-    color: '#334155',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  gradeValor: {
-    color: '#94A3B8',
-    fontSize: 13,
-  },
-
-  // Accordion
-  accordion: {
+  secao01Wrapper: {
     width: '100%',
-    maxWidth: 860,
-    alignSelf: 'center',
-    gap: 6,
     paddingHorizontal: 32,
     paddingBottom: 80,
   },
-  accordionMobile: {
-    paddingHorizontal: 16,
+
+  // Seção DOSSIÊ
+  dossieContainer: {
+    gap: 40,
   },
-  secaoItem: {
-    borderWidth: 1,
-    borderColor: '#ffffff0D',
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: '#0D1117',
-  },
-  secaoItemAberta: {
-    borderColor: '#208AEF20',
-    backgroundColor: '#0D1420',
-  },
-  secaoCabecalho: {
+  dossieTopo: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 22,
-    paddingHorizontal: 24,
-    gap: 14,
   },
-  secaoEsquerda: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 170,
-  },
-  secaoId: {
+  dossieRotuloEsquerda: {
     color: '#208AEF',
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  secaoRotulo: {
+  dossieRotuloDireita: {
     color: '#334155',
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: fonts.bodySemiBold,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
-  secaoTitulo: {
-    flex: 1,
-    color: '#E2E8F0',
-    fontSize: 15,
-    fontWeight: '600',
+  dossieTituloGrande: {
+    color: '#F1F5F9',
+    fontSize: 42,
+    fontFamily: fonts.titleBlack,
+    lineHeight: 54,
+    letterSpacing: -1,
   },
-  secaoCorpo: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    paddingTop: 4,
-    gap: 18,
-  },
-  secaoTexto: {
+  dossieSubtitulo: {
     color: '#64748B',
-    fontSize: 14,
-    lineHeight: 24,
-    maxWidth: 580,
+    fontSize: 15,
+    fontFamily: fonts.body,
+    lineHeight: 28,
+    maxWidth: 1800,
   },
-  tagsRow: {
+  destaqueCiano: {
+    color: '#38BDF8',
+  },
+  dossieCardTopo: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    gap: 10,
   },
-  tag: {
-    borderWidth: 1,
-    borderColor: '#ffffff12',
+  dossieCardBadge: {
+    width: 28,
+    height: 28,
     borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    backgroundColor: '#ffffff05',
+    backgroundColor: '#ffffff0A',
+    borderWidth: 1,
+    borderColor: '#ffffff15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  tagTexto: {
+  dossieCardBadgeTexto: {
     color: '#94A3B8',
-    fontSize: 12,
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+  },
+  dossieCardTitulo: {
+    color: '#E2E8F0',
+    fontSize: 16,
+    fontFamily: fonts.titleBold,
   },
 
-  // Tela vazia
+  // Seção 02 — layout dividido
+  secao02Layout: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 0,
+    marginTop: 90,
+  },
+  secao02Esquerda: {
+    width: 280,
+    gap: 16,
+    paddingRight: 24,
+    paddingBottom: 24,
+    justifyContent: 'flex-end',
+  },
+  secao02Direita: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+
+  // Carrossel
+  carrosselOverflow: {
+    overflow: 'hidden',
+    flex: 1,
+  },
+  carrosselTrilha: {
+    flexDirection: 'row',
+    gap: CARD_GAP,
+  },
+  carrosselCard: {
+    width: CARD_W,
+    height: 400,
+    borderRadius: 14,
+    backgroundColor: '#0a0f1a',
+    borderWidth: 1,
+    borderColor: '#ffffff0D',
+    overflow: 'hidden',
+    position: 'relative',
+    opacity: 0.45,
+  },
+  carrosselCardAtivo: {
+    opacity: 1,
+    borderColor: '#208AEF30',
+  },
+  carrosselCardBody: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0a0f1a',
+  },
+  carrosselCardFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
+    gap: 8,
+    backgroundColor: '#0D1117',
+  },
+  carrosselCardTitulo: {
+    color: '#E2E8F0',
+    fontSize: 26,
+    fontFamily: fonts.titleBold,
+    lineHeight: 34,
+  },
+  carrosselCardDescricao: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontFamily: fonts.body,
+    lineHeight: 22,
+  },
+  carrosselControles: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  carrosselBtnCirculo: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#ffffff20',
+    backgroundColor: '#0D1117',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  carrosselBtnAtivo: {
+    backgroundColor: '#208AEF',
+    borderColor: '#208AEF',
+  },
+  carrosselBtnDesativado: {
+    opacity: 0.3,
+  },
+  carrosselPontos: {
+    flexDirection: 'row',
+    gap: 5,
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  carrosselPonto: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#1e293b',
+  },
+  carrosselPontoAtivo: {
+    width: 20,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#208AEF',
+  },
+
+  secao03Wrapper: {
+    marginTop: 160,
+    paddingHorizontal: 64,
+    paddingBottom: 90,
+    gap: 40,
+  },
+
+
+  teseBodyText: {
+    color: '#94A3B8',
+    fontSize: 16,
+    fontFamily: fonts.body,
+    lineHeight: 26,
+  },
+  // Personas — blocos flip
+  personasBlocos: {
+    flexDirection: 'row',
+    gap: 16,
+    height: 580,
+  },
+  personaFotoBloco: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  personaFotoImg: {
+    width: '100%',
+    height: '70%',
+    resizeMode: 'cover',
+  },
+
+  // Card flip
+  flipContainer: {
+    flex: 1,
+    height: 400,
+    position: 'relative',
+  },
+  flipFace: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0A0F1A',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ffffff0D',
+    padding: 28,
+    justifyContent: 'space-between',
+  },
+  flipVerso: {
+    backgroundColor: '#0D1421',
+    borderColor: '#208AEF15',
+  },
+  flipRotulo: {
+    color: '#208AEF',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  flipTituloFront: {
+    color: '#E2E8F0',
+    fontSize: 30,
+    fontFamily: fonts.titleBlack,
+    lineHeight: 38,
+    letterSpacing: -0.5,
+  },
+  flipDescricao: {
+    color: '#94A3B8',
+    fontSize: 15,
+    fontFamily: fonts.body,
+    lineHeight: 26,
+  },
+  flipHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  flipHintTexto: {
+    color: '#334155',
+    fontSize: 12,
+    fontFamily: fonts.bodySemiBold,
+  },
   telaVazia: {
     flex: 1,
     alignItems: 'center',
