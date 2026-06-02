@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../components/sidebar';
 import { fonts } from '../constants/fonts';
 
+const imgParallax = require('../../assets/nasa-Q1p7bh3SHj8-unsplash.jpg');
+
 const etapas = [
   { numero: '01', rotulo: 'Ver' },
   { numero: '02', rotulo: 'Prever' },
@@ -72,8 +74,6 @@ function Estrela({ top, left, tamanho, duracao, atraso }) {
   );
 }
 
-const secoes = [];
-
 const etapasDetalhadas = [
   { numero: '01', rotulo: 'Ver', descricao: 'O satélite enxerga o que ninguém em campo alcança. Vegetação, umidade do solo e temperatura de superfície, todo dia.' },
   { numero: '02', rotulo: 'Prever', descricao: 'O modelo de ML cruza esses sinais e estima onde o risco vai crescer antes de virar perda.' },
@@ -89,59 +89,6 @@ const slidesCarrossel = etapasDetalhadas.map((e) => ({
   titulo: e.rotulo,
   descricao: e.descricao,
 }));
-
-
-function TimelineItemAccordion({ etapa }) {
-  const animAltura = useRef(new Animated.Value(0)).current;
-  const animOp = useRef(new Animated.Value(0)).current;
-  const animBrilho = useRef(new Animated.Value(0)).current;
-
-  function aoEntrar() {
-    Animated.parallel([
-      Animated.timing(animBrilho, { toValue: 1, duration: 180, useNativeDriver: false }),
-      Animated.timing(animAltura, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-      Animated.timing(animOp, { toValue: 1, duration: 280, useNativeDriver: false }),
-    ]).start();
-  }
-
-  function aoSair() {
-    Animated.parallel([
-      Animated.timing(animBrilho, { toValue: 0, duration: 180, useNativeDriver: false }),
-      Animated.timing(animAltura, { toValue: 0, duration: 260, easing: Easing.in(Easing.cubic), useNativeDriver: false }),
-      Animated.timing(animOp, { toValue: 0, duration: 160, useNativeDriver: false }),
-    ]).start();
-  }
-
-  const corBorda = animBrilho.interpolate({ inputRange: [0, 1], outputRange: ['#ffffff15', '#208AEF'] });
-  const corFundo = animBrilho.interpolate({ inputRange: [0, 1], outputRange: ['transparent', '#208AEF0D'] });
-  const corNumero = animBrilho.interpolate({ inputRange: [0, 1], outputRange: ['#334155', '#208AEF'] });
-  const corNumeroBg = animBrilho.interpolate({ inputRange: [0, 1], outputRange: ['#0D1420', '#208AEF18'] });
-  const alturaExtra = animAltura.interpolate({ inputRange: [0, 1], outputRange: [0, 110] });
-
-  const hoverProps = Platform.OS === 'web'
-    ? { onMouseEnter: aoEntrar, onMouseLeave: aoSair }
-    : { onPressIn: aoEntrar, onPressOut: aoSair };
-
-  return (
-    <Animated.View
-      style={[estilos.timelineItemWrapper, { borderColor: corBorda, backgroundColor: corFundo }]}
-      {...hoverProps}
-    >
-      <View style={estilos.timelineItemRow}>
-        <Animated.View style={[estilos.timelineCirculo, { borderColor: corBorda, backgroundColor: corNumeroBg }]}>
-          <Animated.Text style={[estilos.timelineCirculoTexto, { color: corNumero }]}>{etapa.numero}</Animated.Text>
-        </Animated.View>
-        <View style={estilos.timelineConteudo}>
-          <Text style={estilos.timelineRotulo}>{etapa.rotulo}</Text>
-          <Text style={estilos.timelineDescricao}>{etapa.descricao}</Text>
-        </View>
-      </View>
-      <Animated.View style={{ height: alturaExtra, overflow: 'hidden' }}>
-        <Animated.Text style={[estilos.timelineLorem, { opacity: animOp }]}>{LOREM}</Animated.Text>
-      </Animated.View>
-    </Animated.View>
-  );
-}
 
 const CARD_W = 340;
 const CARD_GAP = 16;
@@ -241,7 +188,6 @@ function SecaoPrincipal({ atraso = 0, eMobile = false, alturaJanela = 800 }) {
 
       {/* Seção 02 — Como funciona (carrossel) */}
       <View style={estilos.secao02Layout}>
-        {/* Coluna esquerda */}
         <View style={estilos.secao02Esquerda}>
           <View style={estilos.dossieCardTopo}>
             <View style={estilos.dossieCardBadge}>
@@ -252,93 +198,11 @@ function SecaoPrincipal({ atraso = 0, eMobile = false, alturaJanela = 800 }) {
           <CarrosselNav slides={slidesCarrossel} indice={indiceCarrossel} irPara={irParaSlide} />
         </View>
 
-        {/* Coluna direita — cards até a borda */}
         <View style={estilos.secao02Direita}>
           <CarrosselCards slides={slidesCarrossel} indice={indiceCarrossel} animX={animXCarrossel} />
         </View>
       </View>
 
-      {/* Seção 03 — Por que isso importa (dropdowns) */}
-
-
-    </Animated.View>
-  );
-}
-
-function SecaoAccordion({ id, rotulo, titulo, texto, tags, atraso = 0 }) {
-  const [aberta, setAberta] = useState(false);
-  const animAltura = useRef(new Animated.Value(0)).current;
-  const animOpacidade = useRef(new Animated.Value(0)).current;
-  const animEntrada = useRef(new Animated.Value(20)).current;
-  const animEntradaOp = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(animEntrada, { toValue: 0, duration: 400, delay: atraso, useNativeDriver: true }),
-      Animated.timing(animEntradaOp, { toValue: 1, duration: 400, delay: atraso, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  function alternar() {
-    const abrindo = !aberta;
-    setAberta(abrindo);
-    Animated.parallel([
-      Animated.timing(animAltura, {
-        toValue: abrindo ? 1 : 0,
-        duration: 380,
-        easing: abrindo ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(animOpacidade, {
-        toValue: abrindo ? 1 : 0,
-        duration: abrindo ? 320 : 200,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }
-
-  const alturaConteudo = animAltura.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, tags.length > 0 ? 160 : 110],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        estilos.secaoItem,
-        aberta && estilos.secaoItemAberta,
-        { opacity: animEntradaOp, transform: [{ translateY: animEntrada }] },
-      ]}
-    >
-      <Pressable style={estilos.secaoCabecalho} onPress={alternar}>
-        <View style={estilos.secaoEsquerda}>
-          <Text style={estilos.secaoId}>{id}</Text>
-          <Text style={estilos.secaoRotulo}>{rotulo}</Text>
-        </View>
-        <Text style={[estilos.secaoTitulo]}>{titulo}</Text>
-        <Ionicons
-          name={aberta ? 'chevron-up-outline' : 'chevron-down-outline'}
-          size={16}
-          color="#475569"
-          style={{ marginLeft: 12 }}
-        />
-      </Pressable>
-
-      <Animated.View style={{ height: alturaConteudo, overflow: 'hidden' }}>
-        <Animated.View style={[estilos.secaoCorpo, { opacity: animOpacidade }]}>
-          <Text style={estilos.secaoTexto}>{texto}</Text>
-          {tags.length > 0 && (
-            <View style={estilos.tagsRow}>
-              {tags.map((tag) => (
-                <View key={tag} style={estilos.tag}>
-                  <Text style={estilos.tagTexto}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </Animated.View>
-      </Animated.View>
     </Animated.View>
   );
 }
@@ -425,6 +289,7 @@ export default function Home() {
   const eMobile = width < 768;
   const mostrarHome = ativo === 'home';
   const scrollRef = useRef(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   return (
     <View style={estilos.container}>
@@ -433,14 +298,12 @@ export default function Home() {
       )}
 
       <View style={estilos.conteudo}>
-        {/* Fundo espacial */}
         <View style={estilos.fundoEspacial} pointerEvents="none">
           {estrelas.map((e) => (
             <Estrela key={e.id} {...e} />
           ))}
         </View>
 
-        {/* Cabeçalho */}
         <View style={estilos.cabecalho}>
           <View style={estilos.cabecalhoEsquerda}>
             <View style={estilos.badgePill}>
@@ -451,9 +314,14 @@ export default function Home() {
         </View>
 
         {mostrarHome ? (
-          <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          <ScrollView
+            ref={scrollRef}
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+            scrollEventThrottle={16}
+          >
 
-            {/* Hero — ocupa 100% da tela */}
             <View style={[estilos.hero, { minHeight: height }]}>
               <Text style={[estilos.titulo, eMobile && estilos.tituloMobile]}>
                 Operar é aprender.{'\n'}Decidir é o impacto.
@@ -478,12 +346,41 @@ export default function Home() {
               <SetaScroll aoClicar={() => scrollRef.current?.scrollTo({ y: height, animated: true })} />
             </View>
 
-            {/* Seções — abaixo do fold */}
             <View style={[estilos.accordion, eMobile && estilos.accordionMobile]}>
               <SecaoPrincipal atraso={0} eMobile={eMobile} alturaJanela={height} />
-              {secoes.map((s, i) => (
-                <SecaoAccordion key={s.id} {...s} atraso={80 + i * 80} />
-              ))}
+            </View>
+
+            {/* Imagem — aparece abaixo da seção 02 */}
+            <View style={estilos.parallaxContainer}>
+              <Animated.Image
+                source={imgParallax}
+                style={estilos.parallaxImg}
+              />
+              {/* Fade superior */}
+              <View
+                pointerEvents="none"
+                style={[
+                  estilos.parallaxFadeTopo,
+                  Platform.OS === 'web' && {
+                    background: 'linear-gradient(to bottom, #050810 0%, transparent 100%)',
+                  },
+                ]}
+              />
+              {/* Fade inferior */}
+              <View
+                pointerEvents="none"
+                style={[
+                  estilos.parallaxFadeBase,
+                  Platform.OS === 'web' && {
+                    background: 'linear-gradient(to bottom, transparent 0%, #050810 100%)',
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Seção 3 */}
+            <View style={estilos.secao03Wrapper}>
+              <Text style={estilos.secao03Titulo}>Seção 3</Text>
             </View>
 
           </ScrollView>
@@ -510,7 +407,6 @@ const estilos = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Fundo espacial
   fundoEspacial: {
     position: 'absolute',
     top: 0,
@@ -518,18 +414,33 @@ const estilos = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  
-  arcoWrapper: {
+  parallaxContainer: {
+    height: 560,
+    overflow: 'hidden',
+    marginTop: 80,
+    position: 'relative',
+  },
+  parallaxImg: {
+    width: '100%',
+    height: 720,
+    resizeMode: 'cover',
+    marginTop: -80,
+  },
+  parallaxFadeTopo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 180,
+  },
+  parallaxFadeBase: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 320,
-    alignItems: 'center',
-    overflow: 'hidden',
+    height: 220,
   },
 
-  // Cabeçalho
   cabecalho: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -543,16 +454,6 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  botaoAbrirSidebar: {
-    padding: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ffffff15',
-  },
-  botaoAbrirTexto: {
-    color: '#64748B',
-    fontSize: 16,
   },
   badgePill: {
     flexDirection: 'row',
@@ -575,20 +476,7 @@ const estilos = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.body,
   },
-  botaoEntrar: {
-    borderWidth: 1,
-    borderColor: '#ffffff30',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  botaoEntrarTexto: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontFamily: fonts.bodySemiBold,
-  },
 
-  // Hero
   hero: {
     flexGrow: 1,
     alignItems: 'center',
@@ -596,17 +484,6 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 40,
     zIndex: 5,
-  },
-  badgePillCentral: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#ffffff20',
-    borderRadius: 100,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    marginBottom: 32,
   },
   titulo: {
     color: '#F8FAFC',
@@ -634,7 +511,6 @@ const estilos = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Etapas — sem container/borda
   barraEtapas: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -673,14 +549,11 @@ const estilos = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Seta scroll
   setaContainer: {
     marginTop: 16,
     alignItems: 'center',
   },
 
-
-  // Accordion
   accordion: {
     width: '100%',
     gap: 6,
@@ -690,79 +563,8 @@ const estilos = StyleSheet.create({
   accordionMobile: {
     paddingHorizontal: 16,
   },
-  secaoItem: {
-    borderWidth: 1,
-    borderColor: '#ffffff0D',
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: '#0D1117',
-  },
-  secaoItemAberta: {
-    borderColor: '#208AEF20',
-    backgroundColor: '#0D1420',
-  },
-  secaoCabecalho: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 22,
-    paddingHorizontal: 24,
-    gap: 14,
-  },
-  secaoEsquerda: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 170,
-  },
-  secaoId: {
-    color: '#208AEF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  secaoRotulo: {
-    color: '#334155',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  secaoTitulo: {
-    flex: 1,
-    color: '#E2E8F0',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  secaoCorpo: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    paddingTop: 4,
-    gap: 18,
-  },
-  secaoTexto: {
-    color: '#64748B',
-    fontSize: 14,
-    lineHeight: 24,
-    maxWidth: 580,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tag: {
-    borderWidth: 1,
-    borderColor: '#ffffff12',
-    borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    backgroundColor: '#ffffff05',
-  },
-  tagTexto: {
-    color: '#94A3B8',
-    fontSize: 12,
-  },
 
-  // Seção - O que é Orbital Academy
+  // Seção DOSSIÊ
   dossieContainer: {
     gap: 28,
   },
@@ -784,17 +586,6 @@ const estilos = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-  },
-  dossieTitulo: {
-    color: '#F1F5F9',
-    fontSize: 32,
-    fontWeight: '800',
-    lineHeight: 44,
-    letterSpacing: -0.5,
-  },
-  dossieTituloMobile: {
-    fontSize: 22,
-    lineHeight: 32,
   },
   dossieTituloGrande: {
     color: '#F1F5F9',
@@ -821,21 +612,6 @@ const estilos = StyleSheet.create({
   destaqueCiano: {
     color: '#38BDF8',
   },
-  dossieCards: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  dossieCardsMobile: {
-    flexDirection: 'column',
-  },
-  dossieCard: {
-    borderWidth: 1,
-    borderColor: '#ffffff10',
-    borderRadius: 14,
-    backgroundColor: '#0D1117',
-    padding: 24,
-    gap: 16,
-  },
   dossieCardTopo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -861,41 +637,8 @@ const estilos = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.titleBold,
   },
-  dossieCardTexto: {
-    color: '#64748B',
-    fontSize: 13,
-    fontFamily: fonts.body,
-    lineHeight: 22,
-  },
 
-  
-
-  // Timeline accordion extras
-  timelineItemWrapper: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 16,
-    gap: 8,
-  },
-  timelineItemRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-  },
-  timelineHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  timelineLorem: {
-    color: '#334155',
-    fontSize: 12,
-    fontFamily: fonts.body,
-    lineHeight: 18,
-    marginTop: 8,
-  },
-
-  // Seção 02 - Carrossel / Divisão 
+  // Seção 02 — layout dividido
   secao02Layout: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -914,11 +657,7 @@ const estilos = StyleSheet.create({
     overflow: 'hidden',
   },
 
-
-  // Seção 02 - Carrossel
-  carrosselWrapper: {
-    gap: 20,
-  },
+  // Carrossel
   carrosselOverflow: {
     overflow: 'hidden',
     flex: 1,
@@ -1015,32 +754,18 @@ const estilos = StyleSheet.create({
     backgroundColor: '#208AEF',
   },
 
-  
-  // legado (não usado, mantido por segurança)
-  carrosselContainer: { gap: 0 },
-  carrosselSlide: { gap: 0 },
-  carrosselBadge: { flexDirection: 'row' },
-  carrosselBadgeTitulo: { color: '#E2E8F0' },
-  carrosselTexto: { color: '#64748B' },
-  carrosselBotoes: { flexDirection: 'row' },
-  carrosselBtn: { width: 28, height: 28, borderRadius: 6 },
-
-  // Quote
-  quoteBox: {
-    borderWidth: 1,
-    borderColor: '#208AEF30',
-    borderRadius: 10,
-    backgroundColor: '#208AEF08',
-    padding: 16,
+  secao03Wrapper: {
+    marginTop: 60,
+    paddingHorizontal: 64,
+    paddingBottom: 120,
   },
-  quoteTexto: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontFamily: fonts.body,
-    lineHeight: 22,
+  secao03Titulo: {
+    color: '#F1F5F9',
+    fontSize: 48,
+    fontFamily: fonts.titleBlack,
+    letterSpacing: -1,
   },
 
-  // Tela vazia
   telaVazia: {
     flex: 1,
     alignItems: 'center',
