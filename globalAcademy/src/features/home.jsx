@@ -15,6 +15,28 @@ import Sidebar from '../components/sidebar';
 import { fonts } from '../constants/fonts';
 
 const imgParallax = require('../../assets/nasa-Q1p7bh3SHj8-unsplash.jpg');
+const imgPersonas = require('../../assets/premium_photo-1679756099079-84d8ab833a3f.avif');
+
+const personasData = [
+  {
+    id: 'produtor',
+    rotulo: 'Persona 01',
+    titulo: 'Pequeno produtor rural',
+    descricao: 'Vê a lavoura do chão, não do céu. Sabe que tem um problema mas não sabe em qual área agir primeiro com os recursos que tem. \n\nO satélite está disponível, mas o caminho entre o dado e a ação ainda é longo demais para quem não é especialista.',
+  },
+  {
+    id: 'defesa',
+    rotulo: 'Persona 02',
+    titulo: 'Equipe da Defesa Civil municipal',
+    descricao: 'Precisa priorizar risco com equipe e tempo contados. Um município pequeno não tem analista de dados espaciais. \n\n E sim um gestor que precisa decidir em minutos onde mandar a equipe e o equipamento disponível.',
+  },
+  {
+    id: 'saude',
+    rotulo: 'Persona 03',
+    titulo: 'Agente de saúde em campo',
+    descricao: 'Decide rotas e recursos onde o dado raramente chega. O acompanhamento de áreas de risco hídrico ou vetorial por satélite poderia guiar a priorização, mas a capacidade de interpretar e agir sobre esse dado está fora do alcance operacional atual.',
+  },
+];
 
 const etapas = [
   { numero: '01', rotulo: 'Ver' },
@@ -137,7 +159,7 @@ function CarrosselCards({ slides, indice, animX }) {
   );
 }
 
-function SecaoPrincipal({ atraso = 0, eMobile = false, alturaJanela = 800 }) {
+function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
   const animY = useRef(new Animated.Value(24)).current;
   const animOp = useRef(new Animated.Value(0)).current;
   const [indiceCarrossel, setIndiceCarrossel] = useState(0);
@@ -172,17 +194,17 @@ function SecaoPrincipal({ atraso = 0, eMobile = false, alturaJanela = 800 }) {
       </View>
 
       {/* Título principal */}
-      <Text style={[estilos.dossieTituloGrande, eMobile && estilos.dossieTituloGrandeMobile]}>
+      <Text style={estilos.dossieTituloGrande}>
         Dado espacial em decisão real.{'\n'}
         <Text style={estilos.destaqueCiano}>Sem precisar ser especialista.</Text>
       </Text>
 
       {/* Subtítulo */}
-      <Text style={[estilos.dossieSubtitulo, eMobile && estilos.dossieSubtituloMobile]}>
+      <Text style={estilos.dossieSubtitulo}>
         {'O Orbital Academy pega o que a NASA e o INPE já enxergam lá de cima. Risco em lavoura, foco de calor, déficit hídrico e coloca na mão de quem precisa decidir o que fazer com isso!\nUm modelo prevê. Um otimizador aloca. Você opera. O satélite finalmente chega em campo.'}
       </Text>
 
-      <Text style={[estilos.dossieSubtitulo, eMobile && estilos.dossieSubtituloMobile]}>
+      <Text style={estilos.dossieSubtitulo}>
         {'A plataforma não substitui o especialista técnico: ela torna a capacidade de decidir com dado espacial acessível para qualquer operador, qualquer produtor rural, qualquer equipe de campo que antes ficava de fora desse ciclo por falta de formação específica ou de ferramentas adequadas.'}
       </Text>
 
@@ -283,19 +305,86 @@ function ItemEtapa({ numero, rotulo, atraso = 0 }) {
   );
 }
 
+function CardFlip({ persona }) {
+  const animFlip = useRef(new Animated.Value(0)).current;
+
+  const frente = animFlip.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
+  const verso = animFlip.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg'] });
+
+  const hoverProps = Platform.OS === 'web'
+    ? {
+        onMouseEnter: () => Animated.timing(animFlip, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(),
+        onMouseLeave: () => Animated.timing(animFlip, { toValue: 0, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(),
+      }
+    : {};
+
+  return (
+    <View style={estilos.flipContainer} {...hoverProps}>
+      {/* Frente */}
+      <Animated.View style={[estilos.flipFace, { transform: [{ perspective: 1200 }, { rotateY: frente }], backfaceVisibility: 'hidden' }]}>
+        <View>
+          <Text style={estilos.flipRotulo}>{persona.rotulo}</Text>
+          <Text style={estilos.flipTituloFront}>{persona.titulo}</Text>
+        </View>
+        <View style={estilos.flipHintRow}>
+          <Text style={estilos.flipHintTexto}>Ver detalhes</Text>
+          <Ionicons name="arrow-forward-outline" size={13} color="#334155" />
+        </View>
+      </Animated.View>
+
+      {/* Verso */}
+      <Animated.View style={[estilos.flipFace, estilos.flipVerso, { transform: [{ perspective: 1200 }, { rotateY: verso }], backfaceVisibility: 'hidden', justifyContent: 'center' }]}>
+        <Text style={estilos.flipDescricao}>{persona.descricao}</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+function SecaoTese() {
+  return (
+    <View style={estilos.secao03Wrapper}>
+
+      {/* Topo */}
+      <View style={estilos.dossieTopo}>
+        <Text style={estilos.dossieRotuloEsquerda}>TESE E RESULTADO</Text>
+        <Text style={estilos.dossieRotuloDireita}>03 / TESE</Text>
+      </View>
+
+      <View style={estilos.dossieCardTopo}>
+        <View style={estilos.dossieCardBadge}>
+          <Text style={estilos.dossieCardBadgeTexto}>03</Text>
+        </View>
+        <Text style={[estilos.dossieCardTitulo, { fontSize: 26, lineHeight: 34 }]}>Por que isso importa?</Text>
+      </View>
+      <Text style={estilos.teseBodyText}>
+        Dado espacial é abundante, gratuito e cada vez mais preciso. {'\n'}O que ainda é escasso é a capacidade de transformar esse dado em ação sob recurso limitado, em tempo real, por pessoas que não têm formação em sensoriamento remoto.
+      </Text>
+
+
+      {/* Personas */}
+      <View style={estilos.personasBlocos}>
+        <CardFlip persona={personasData[0]} />
+        <CardFlip persona={personasData[1]} />
+        <View style={estilos.personaFotoBloco}>
+          <Animated.Image source={imgPersonas} style={estilos.personaFotoImg} />
+        </View>
+        <CardFlip persona={personasData[2]} />
+      </View>
+
+    </View>
+  );
+}
+
 export default function Home() {
   const [ativo, setAtivo] = useState('home');
-  const { width, height } = useWindowDimensions();
-  const eMobile = width < 768;
+  const { height } = useWindowDimensions();
   const mostrarHome = ativo === 'home';
   const scrollRef = useRef(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   return (
     <View style={estilos.container}>
-      {!eMobile && (
-        <Sidebar ativo={ativo} aoSelecionar={setAtivo} />
-      )}
+      <Sidebar ativo={ativo} aoSelecionar={setAtivo} />
 
       <View style={estilos.conteudo}>
         <View style={estilos.fundoEspacial} pointerEvents="none">
@@ -323,16 +412,16 @@ export default function Home() {
           >
 
             <View style={[estilos.hero, { minHeight: height }]}>
-              <Text style={[estilos.titulo, eMobile && estilos.tituloMobile]}>
+              <Text style={estilos.titulo}>
                 Operar é aprender.{'\n'}Decidir é o impacto.
               </Text>
 
-              <Text style={[estilos.subtitulo, eMobile && estilos.subtituloMobile]}>
+              <Text style={estilos.subtitulo}>
                 O Orbital Academy é uma plataforma que ensina qualquer pessoa a
                 transformar dado espacial em decisão real!
               </Text>
 
-              <View style={[estilos.barraEtapas, eMobile && estilos.barraEtapasMobile]}>
+              <View style={estilos.barraEtapas}>
                 {etapas.map((etapa, indice) => (
                   <View key={etapa.numero} style={estilos.etapaGrupo}>
                     <ItemEtapa numero={etapa.numero} rotulo={etapa.rotulo} atraso={indice * 80} />
@@ -346,8 +435,8 @@ export default function Home() {
               <SetaScroll aoClicar={() => scrollRef.current?.scrollTo({ y: height, animated: true })} />
             </View>
 
-            <View style={[estilos.accordion, eMobile && estilos.accordionMobile]}>
-              <SecaoPrincipal atraso={0} eMobile={eMobile} alturaJanela={height} />
+            <View style={estilos.secao01Wrapper}>
+              <SecaoPrincipal atraso={0} alturaJanela={height} />
             </View>
 
             {/* Imagem — aparece abaixo da seção 02 */}
@@ -378,10 +467,8 @@ export default function Home() {
               />
             </View>
 
-            {/* Seção 3 */}
-            <View style={estilos.secao03Wrapper}>
-              <Text style={estilos.secao03Titulo}>Seção 3</Text>
-            </View>
+            {/* Seção 03 — Tese e Resultado */}
+            <SecaoTese />
 
           </ScrollView>
         ) : (
@@ -494,10 +581,6 @@ const estilos = StyleSheet.create({
     letterSpacing: -1,
     marginBottom: 24,
   },
-  tituloMobile: {
-    fontSize: 36,
-    lineHeight: 44,
-  },
   subtitulo: {
     color: '#64748B',
     fontSize: 16,
@@ -507,9 +590,6 @@ const estilos = StyleSheet.create({
     maxWidth: 540,
     marginBottom: 60,
   },
-  subtituloMobile: {
-    fontSize: 14,
-  },
 
   barraEtapas: {
     flexDirection: 'row',
@@ -517,9 +597,6 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 4,
-  },
-  barraEtapasMobile: {
-    gap: 2,
   },
   etapaGrupo: {
     flexDirection: 'row',
@@ -554,19 +631,15 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
   },
 
-  accordion: {
+  secao01Wrapper: {
     width: '100%',
-    gap: 6,
     paddingHorizontal: 32,
     paddingBottom: 80,
-  },
-  accordionMobile: {
-    paddingHorizontal: 16,
   },
 
   // Seção DOSSIÊ
   dossieContainer: {
-    gap: 28,
+    gap: 40,
   },
   dossieTopo: {
     flexDirection: 'row',
@@ -594,20 +667,12 @@ const estilos = StyleSheet.create({
     lineHeight: 54,
     letterSpacing: -1,
   },
-  dossieTituloGrandeMobile: {
-    fontSize: 26,
-    lineHeight: 36,
-  },
   dossieSubtitulo: {
     color: '#64748B',
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: fonts.body,
-    lineHeight: 24,
+    lineHeight: 28,
     maxWidth: 1800,
-  },
-  dossieSubtituloMobile: {
-    fontSize: 13,
-    lineHeight: 22,
   },
   destaqueCiano: {
     color: '#38BDF8',
@@ -643,7 +708,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 0,
-    marginTop: 100,
+    marginTop: 90,
   },
   secao02Esquerda: {
     width: 280,
@@ -755,17 +820,90 @@ const estilos = StyleSheet.create({
   },
 
   secao03Wrapper: {
-    marginTop: 60,
+    marginTop: 160,
     paddingHorizontal: 64,
-    paddingBottom: 120,
-  },
-  secao03Titulo: {
-    color: '#F1F5F9',
-    fontSize: 48,
-    fontFamily: fonts.titleBlack,
-    letterSpacing: -1,
+    paddingBottom: 90,
+    gap: 40,
   },
 
+
+  teseBodyText: {
+    color: '#94A3B8',
+    fontSize: 16,
+    fontFamily: fonts.body,
+    lineHeight: 26,
+  },
+  // Personas — blocos flip
+  personasBlocos: {
+    flexDirection: 'row',
+    gap: 16,
+    height: 580,
+  },
+  personaFotoBloco: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  personaFotoImg: {
+    width: '100%',
+    height: '70%',
+    resizeMode: 'cover',
+  },
+
+  // Card flip
+  flipContainer: {
+    flex: 1,
+    height: 400,
+    position: 'relative',
+  },
+  flipFace: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0A0F1A',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ffffff0D',
+    padding: 28,
+    justifyContent: 'space-between',
+  },
+  flipVerso: {
+    backgroundColor: '#0D1421',
+    borderColor: '#208AEF15',
+  },
+  flipRotulo: {
+    color: '#208AEF',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  flipTituloFront: {
+    color: '#E2E8F0',
+    fontSize: 30,
+    fontFamily: fonts.titleBlack,
+    lineHeight: 38,
+    letterSpacing: -0.5,
+  },
+  flipDescricao: {
+    color: '#94A3B8',
+    fontSize: 15,
+    fontFamily: fonts.body,
+    lineHeight: 26,
+  },
+  flipHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  flipHintTexto: {
+    color: '#334155',
+    fontSize: 12,
+    fontFamily: fonts.bodySemiBold,
+  },
   telaVazia: {
     flex: 1,
     alignItems: 'center',
