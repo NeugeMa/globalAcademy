@@ -7,12 +7,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../components/sidebar';
 import { fonts } from '../constants/fonts';
+import { useBreakpoint } from '../styles/breakpoint';
 
 const imgParallax = require('../../assets/nasa-Q1p7bh3SHj8-unsplash.jpg');
 const imgPersonas = require('../../assets/premium_photo-1679756099079-84d8ab833a3f.avif');
@@ -28,13 +28,13 @@ const personasData = [
     id: 'defesa',
     rotulo: 'Persona 02',
     titulo: 'Equipe da Defesa Civil municipal',
-    descricao: 'Precisa priorizar risco com equipe e tempo contados. Um município pequeno não tem analista de dados espaciais. \n\n E sim um gestor que precisa decidir em minutos onde mandar a equipe e o equipamento disponível.',
+    descricao: 'Precisa priorizar risco com equipe e tempo contados. Um município pequeno não tem analista de dados espaciais. \n\nE sim um gestor que precisa decidir em minutos onde mandar a equipe e o equipamento disponível.',
   },
   {
     id: 'saude',
     rotulo: 'Persona 03',
     titulo: 'Agente de saúde em campo',
-    descricao: 'Decide rotas e recursos onde o dado raramente chega. O acompanhamento de áreas de risco hídrico ou vetorial por satélite poderia guiar a priorização, mas a capacidade de interpretar e agir sobre esse dado está fora do alcance operacional atual.',
+    descricao: 'Decide rotas e recursos onde o dado raramente chega. O acompanhamento de áreas de risco hídrico ou vetorial por satélite poderia guiar a priorização! \n\nMas a capacidade de interpretar e agir sobre esse dado está fora do alcance operacional atual.',
   },
 ];
 
@@ -141,12 +141,12 @@ function CarrosselNav({ slides, indice, irPara }) {
   );
 }
 
-function CarrosselCards({ slides, indice, animX }) {
+function CarrosselCards({ slides, indice, animX, cardW }) {
   return (
     <View style={estilos.carrosselOverflow}>
       <Animated.View style={[estilos.carrosselTrilha, { transform: [{ translateX: animX }] }]}>
         {slides.map((slide, i) => (
-          <View key={slide.id} style={[estilos.carrosselCard, i === indice && estilos.carrosselCardAtivo]}>
+          <View key={slide.id} style={[estilos.carrosselCard, { width: cardW }, i === indice && estilos.carrosselCardAtivo]}>
             <View style={estilos.carrosselCardBody} />
             <View style={estilos.carrosselCardFooter}>
               <Text style={estilos.carrosselCardTitulo}>{slide.titulo}</Text>
@@ -160,22 +160,33 @@ function CarrosselCards({ slides, indice, animX }) {
 }
 
 function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
+  const { width, isMobile } = useBreakpoint();
   const animY = useRef(new Animated.Value(24)).current;
   const animOp = useRef(new Animated.Value(0)).current;
   const [indiceCarrossel, setIndiceCarrossel] = useState(0);
   const animXCarrossel = useRef(new Animated.Value(0)).current;
 
+  // No mobile o card ocupa a largura disponível (descontando o padding lateral
+  // da seção, que cai para 20 de cada lado); no desktop mantém a largura fixa.
+  const cardW = isMobile ? Math.max(width - 40, 240) : CARD_W;
+  const passo = cardW + CARD_GAP;
+
   function irParaSlide(novoIndice) {
     const total = slidesCarrossel.length;
     const idx = ((novoIndice % total) + total) % total;
     Animated.timing(animXCarrossel, {
-      toValue: idx * -(CARD_W + CARD_GAP),
+      toValue: idx * -passo,
       duration: 420,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
     setIndiceCarrossel(idx);
   }
+
+  // Reposiciona a trilha sem animar quando a largura do card muda (resize).
+  useEffect(() => {
+    animXCarrossel.setValue(indiceCarrossel * -passo);
+  }, [passo]);
 
   useEffect(() => {
     Animated.parallel([
@@ -194,7 +205,7 @@ function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
       </View>
 
       {/* Título principal */}
-      <Text style={estilos.dossieTituloGrande}>
+      <Text style={[estilos.dossieTituloGrande, isMobile && estilos.dossieTituloGrandeMobile]}>
         Dado espacial em decisão real.{'\n'}
         <Text style={estilos.destaqueCiano}>Sem precisar ser especialista.</Text>
       </Text>
@@ -209,8 +220,8 @@ function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
       </Text>
 
       {/* Seção 02 — Como funciona (carrossel) */}
-      <View style={estilos.secao02Layout}>
-        <View style={estilos.secao02Esquerda}>
+      <View style={[estilos.secao02Layout, isMobile && estilos.secao02LayoutMobile]}>
+        <View style={[estilos.secao02Esquerda, isMobile && estilos.secao02EsquerdaMobile]}>
           <View style={estilos.dossieCardTopo}>
             <View style={estilos.dossieCardBadge}>
               <Text style={estilos.dossieCardBadgeTexto}>02</Text>
@@ -220,8 +231,8 @@ function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
           <CarrosselNav slides={slidesCarrossel} indice={indiceCarrossel} irPara={irParaSlide} />
         </View>
 
-        <View style={estilos.secao02Direita}>
-          <CarrosselCards slides={slidesCarrossel} indice={indiceCarrossel} animX={animXCarrossel} />
+        <View style={[estilos.secao02Direita, isMobile && estilos.secao02DireitaMobile]}>
+          <CarrosselCards slides={slidesCarrossel} indice={indiceCarrossel} animX={animXCarrossel} cardW={cardW} />
         </View>
       </View>
 
@@ -305,8 +316,19 @@ function ItemEtapa({ numero, rotulo, atraso = 0 }) {
   );
 }
 
-function CardFlip({ persona }) {
+function CardFlip({ persona, isMobile }) {
   const animFlip = useRef(new Animated.Value(0)).current;
+
+  // No mobile não há hover: mostra título + descrição empilhados, sem flip.
+  if (isMobile) {
+    return (
+      <View style={estilos.personaCardMobile}>
+        <Text style={estilos.flipRotulo}>{persona.rotulo}</Text>
+        <Text style={estilos.flipTituloFront}>{persona.titulo}</Text>
+        <Text style={estilos.flipDescricao}>{persona.descricao}</Text>
+      </View>
+    );
+  }
 
   const frente = animFlip.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
   const verso = animFlip.interpolate({ inputRange: [0, 1], outputRange: ['-180deg', '0deg'] });
@@ -341,8 +363,9 @@ function CardFlip({ persona }) {
 }
 
 function SecaoTese() {
+  const { isMobile } = useBreakpoint();
   return (
-    <View style={estilos.secao03Wrapper}>
+    <View style={[estilos.secao03Wrapper, isMobile && estilos.secao03WrapperMobile]}>
 
       {/* Topo */}
       <View style={estilos.dossieTopo}>
@@ -362,13 +385,13 @@ function SecaoTese() {
 
 
       {/* Personas */}
-      <View style={estilos.personasBlocos}>
-        <CardFlip persona={personasData[0]} />
-        <CardFlip persona={personasData[1]} />
-        <View style={estilos.personaFotoBloco}>
-          <Animated.Image source={imgPersonas} style={estilos.personaFotoImg} />
+      <View style={[estilos.personasBlocos, isMobile && estilos.personasBlocosMobile]}>
+        <CardFlip persona={personasData[0]} isMobile={isMobile} />
+        <CardFlip persona={personasData[1]} isMobile={isMobile} />
+        <View style={[estilos.personaFotoBloco, isMobile && estilos.personaFotoBlocoMobile]}>
+          <Animated.Image source={imgPersonas} style={[estilos.personaFotoImg, isMobile && estilos.personaFotoImgMobile]} />
         </View>
-        <CardFlip persona={personasData[2]} />
+        <CardFlip persona={personasData[2]} isMobile={isMobile} />
       </View>
 
     </View>
@@ -377,14 +400,21 @@ function SecaoTese() {
 
 export default function Home() {
   const [ativo, setAtivo] = useState('home');
-  const { height } = useWindowDimensions();
+  const [menuAberto, setMenuAberto] = useState(false);
+  const { height, isMobile } = useBreakpoint();
   const mostrarHome = ativo === 'home';
   const scrollRef = useRef(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  function selecionar(chave) {
+    setAtivo(chave);
+    setMenuAberto(false);
+  }
+
   return (
     <View style={estilos.container}>
-      <Sidebar ativo={ativo} aoSelecionar={setAtivo} />
+      {/* Desktop: sidebar fixa inline (expande no hover) */}
+      {!isMobile && <Sidebar ativo={ativo} aoSelecionar={setAtivo} />}
 
       <View style={estilos.conteudo}>
         <View style={estilos.fundoEspacial} pointerEvents="none">
@@ -394,6 +424,11 @@ export default function Home() {
         </View>
 
         <View style={estilos.cabecalho}>
+          {isMobile && (
+            <Pressable style={estilos.hamburguer} onPress={() => setMenuAberto(true)} hitSlop={8}>
+              <Ionicons name="menu-outline" size={24} color="#CBD5E1" />
+            </Pressable>
+          )}
           <View style={estilos.cabecalhoEsquerda}>
             <View style={estilos.badgePill}>
               <View style={estilos.badgePonto} />
@@ -411,8 +446,8 @@ export default function Home() {
             scrollEventThrottle={16}
           >
 
-            <View style={[estilos.hero, { minHeight: height }]}>
-              <Text style={estilos.titulo}>
+            <View style={[estilos.hero, isMobile && estilos.heroMobile, { minHeight: height }]}>
+              <Text style={[estilos.titulo, isMobile && estilos.tituloMobile]}>
                 Operar é aprender.{'\n'}Decidir é o impacto.
               </Text>
 
@@ -435,15 +470,15 @@ export default function Home() {
               <SetaScroll aoClicar={() => scrollRef.current?.scrollTo({ y: height, animated: true })} />
             </View>
 
-            <View style={estilos.secao01Wrapper}>
+            <View style={[estilos.secao01Wrapper, isMobile && estilos.secao01WrapperMobile]}>
               <SecaoPrincipal atraso={0} alturaJanela={height} />
             </View>
 
             {/* Imagem — aparece abaixo da seção 02 */}
-            <View style={estilos.parallaxContainer}>
+            <View style={[estilos.parallaxContainer, isMobile && estilos.parallaxContainerMobile]}>
               <Animated.Image
                 source={imgParallax}
-                style={estilos.parallaxImg}
+                style={[estilos.parallaxImg, isMobile && estilos.parallaxImgMobile]}
               />
               {/* Fade superior */}
               <View
@@ -477,6 +512,21 @@ export default function Home() {
           </View>
         )}
       </View>
+
+      {/* Mobile: backdrop + drawer por cima do conteúdo */}
+      {isMobile && (
+        <>
+          {menuAberto && (
+            <Pressable style={estilos.backdrop} onPress={() => setMenuAberto(false)} />
+          )}
+          <Sidebar
+            ativo={ativo}
+            aoSelecionar={selecionar}
+            aberto={menuAberto}
+            aoFechar={() => setMenuAberto(false)}
+          />
+        </>
+      )}
 
     </View>
   );
@@ -904,6 +954,92 @@ const estilos = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.bodySemiBold,
   },
+  // ---- Variantes mobile (< 1024px) ----
+  secao01WrapperMobile: {
+    paddingHorizontal: 20,
+    paddingBottom: 48,
+  },
+  hamburguer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ffffff15',
+    backgroundColor: '#ffffff08',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#00000099',
+    zIndex: 40,
+  },
+  heroMobile: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  tituloMobile: {
+    fontSize: 32,
+    lineHeight: 40,
+    letterSpacing: -0.5,
+  },
+  dossieTituloGrandeMobile: {
+    fontSize: 28,
+    lineHeight: 36,
+  },
+  secao02LayoutMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    marginTop: 48,
+    gap: 24,
+  },
+  secao02EsquerdaMobile: {
+    width: '100%',
+    paddingRight: 0,
+    paddingBottom: 0,
+  },
+  secao02DireitaMobile: {
+    width: '100%',
+    // No layout em coluna o eixo principal vira vertical; sem altura definida o
+    // container (que herda flexBasis 0% do flex:1) colapsaria e o overflow:hidden
+    // esconderia o card. Fixamos a altura do card (400) aqui.
+    height: 400,
+  },
+  secao03WrapperMobile: {
+    marginTop: 80,
+    paddingHorizontal: 20,
+  },
+  personasBlocosMobile: {
+    flexDirection: 'column',
+    height: 'auto',
+  },
+  personaFotoBlocoMobile: {
+    height: 280,
+  },
+  personaFotoImgMobile: {
+    height: '100%',
+  },
+  personaCardMobile: {
+    backgroundColor: '#0A0F1A',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ffffff0D',
+    padding: 24,
+    gap: 12,
+  },
+  parallaxContainerMobile: {
+    height: 320,
+    marginTop: 48,
+  },
+  parallaxImgMobile: {
+    height: 440,
+    marginTop: -60,
+  },
+
   telaVazia: {
     flex: 1,
     alignItems: 'center',
