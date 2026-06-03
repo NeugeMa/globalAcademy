@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../components/sidebar';
-import { fonts } from '../constants/fonts';
+import { fonts } from '../styles/fonts';
 import { useBreakpoint } from '../styles/breakpoint';
 
 const imgParallax = require('../../assets/nasa-Q1p7bh3SHj8-unsplash.jpg');
@@ -147,7 +147,6 @@ function CarrosselCards({ slides, indice, animX, cardW }) {
       <Animated.View style={[estilos.carrosselTrilha, { transform: [{ translateX: animX }] }]}>
         {slides.map((slide, i) => (
           <View key={slide.id} style={[estilos.carrosselCard, { width: cardW }, i === indice && estilos.carrosselCardAtivo]}>
-            <View style={estilos.carrosselCardBody} />
             <View style={estilos.carrosselCardFooter}>
               <Text style={estilos.carrosselCardTitulo}>{slide.titulo}</Text>
               <Text style={estilos.carrosselCardDescricao}>{slide.descricao}</Text>
@@ -166,8 +165,6 @@ function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
   const [indiceCarrossel, setIndiceCarrossel] = useState(0);
   const animXCarrossel = useRef(new Animated.Value(0)).current;
 
-  // No mobile o card ocupa a largura disponível (descontando o padding lateral
-  // da seção, que cai para 20 de cada lado); no desktop mantém a largura fixa.
   const cardW = isMobile ? Math.max(width - 40, 240) : CARD_W;
   const passo = cardW + CARD_GAP;
 
@@ -183,7 +180,6 @@ function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
     setIndiceCarrossel(idx);
   }
 
-  // Reposiciona a trilha sem animar quando a largura do card muda (resize).
   useEffect(() => {
     animXCarrossel.setValue(indiceCarrossel * -passo);
   }, [passo]);
@@ -198,19 +194,15 @@ function SecaoPrincipal({ atraso = 0, alturaJanela = 800 }) {
   return (
     <Animated.View style={[{ opacity: animOp, transform: [{ translateY: animY }] }, estilos.dossieContainer, { minHeight: alturaJanela }]}>
 
-      {/* Topo da seção */}
       <View style={estilos.dossieTopo}>
         <Text style={estilos.dossieRotuloEsquerda}>O QUE É O ORBITAL ACADEMY</Text>
         <Text style={estilos.dossieRotuloDireita}>01 / DOSSIÊ</Text>
       </View>
 
-      {/* Título principal */}
       <Text style={[estilos.dossieTituloGrande, isMobile && estilos.dossieTituloGrandeMobile]}>
-        Dado espacial em decisão real.{'\n'}
-        <Text style={estilos.destaqueCiano}>Sem precisar ser especialista.</Text>
+        Dado espacial em decisão real, <Text style={estilos.destaqueCiano}> sem precisar ser especialista.</Text>
       </Text>
 
-      {/* Subtítulo */}
       <Text style={estilos.dossieSubtitulo}>
         {'O Orbital Academy pega o que a NASA e o INPE já enxergam lá de cima. Risco em lavoura, foco de calor, déficit hídrico e coloca na mão de quem precisa decidir o que fazer com isso!\nUm modelo prevê. Um otimizador aloca. Você opera. O satélite finalmente chega em campo.'}
       </Text>
@@ -369,8 +361,8 @@ function SecaoTese() {
 
       {/* Topo */}
       <View style={estilos.dossieTopo}>
-        <Text style={estilos.dossieRotuloEsquerda}>TESE E RESULTADO</Text>
-        <Text style={estilos.dossieRotuloDireita}>03 / TESE</Text>
+        <Text style={estilos.dossieRotuloEsquerda}>TESE E ARQUITETURA</Text>
+        <Text style={estilos.dossieRotuloDireita}>02 / TESE</Text>
       </View>
 
       <View style={estilos.dossieCardTopo}>
@@ -392,6 +384,120 @@ function SecaoTese() {
           <Animated.Image source={imgPersonas} style={[estilos.personaFotoImg, isMobile && estilos.personaFotoImgMobile]} />
         </View>
         <CardFlip persona={personasData[2]} isMobile={isMobile} />
+      </View>
+
+    </View>
+  );
+}
+
+// Seção 04 — os componentes da arquitetura (cards lado a lado).
+const componentesData = [
+  {
+    id: 'console',
+    icone: 'desktop-outline',
+    titulo: 'Console de Missão',
+    tagline: 'Interface central de operação',
+    descricao: `Agrega mapa de risco em tempo real, ranking de áreas priorizadas pelo modelo com o motivo principal de cada previsão, fila de decisões do dia com status de cada missão e indicadores de impacto consolidados. 
+    \nFoi projetado com um critério único de usabilidade: qualquer pessoa inclusive um jurado da banca que nunca usou o sistema consegue sentar, entender o cenário e tomar uma decisão operacional em menos de dois minutos, sem treinamento, sem manual. 
+    \nSe isso não acontece, a interface falhou.`
+  },
+  {
+    id: 'modelo',
+    icone: 'analytics-outline',
+    titulo: '0.1 - Motor de Decisão',
+    tagline: 'Modelo de ML tradicional · previsão de risco',
+    descricao: `O cérebro preditivo do sistema. Random Forest e Regressão Logística são treinados sobre dados reais de NASA Earthdata, INMET e INPE — NDVI, temperatura de superfície, déficit hídrico, uso da terra. 
+    \nO modelo prevê o risco de perda por área com métricas claras (F1 ponderada e AUC ROC) e entrega as três variáveis que mais pesam em cada previsão, com porcentagem de importância. 
+    \nIsso elimina a caixa-preta: o operador sabe exatamente por que o sistema apontou aquela área. Os dois modelos são comparados explicitamente para validação científica quem performa melhor em quais condições, e por quê.`,
+  },
+  {
+    id: 'otimizador',
+    icone: 'options-outline',
+    titulo: '0.2 - Otimizador de Recursos',
+    tagline: 'Otimizador próprio · alocação de recursos',
+    descricao: `O diferencial técnico central do projeto, e a razão pela qual o Orbital Academy não é "mais um app de NDVI". Formulado e implementado pelo time, o otimizador recebe o score de risco de cada área (produzido pela camada 1) e resolve o problema de alocação ótima de recursos escassos: quanto de água vai para cada área, qual equipe vai a qual missão, em qual ordem de execução, dentro de quanto tempo disponível. `  },
+  {
+    id: 'camera',
+    icone: 'camera-outline',
+    titulo: 'Câmera de Validação',
+    tagline: 'Visão computacional · ground-truth em campo',
+    descricao: `O operador aponta a câmera do notebook ou do celular para uma amostra da cultura e o sistema classifica em tempo real saudável, estresse hídrico, praga, doença com o percentual de confiança de cada classe. 
+    \nEsse resultado valida ou corrige o que o satélite previu, fechando o loop de ground-truth que qualquer modelo de ML precisa para ser confiável ao longo do tempo. 
+    \nA inferência roda localmente no dispositivo: sem câmera funcionando, sem servidor. Isso é importante para o cenário de campo. Se não há rede, a câmera ainda funciona e o resultado é enfileirado para sincronização posterior.`,
+  },
+];
+
+function CardArquitetura({ item, isMobile }) {
+  const [aberto, setAberto] = useState(false);
+  const animOverlay = useRef(new Animated.Value(0)).current;
+
+  function revelar(visivel) {
+    Animated.timing(animOverlay, {
+      toValue: visivel ? 1 : 0,
+      duration: visivel ? 200 : 160,
+      useNativeDriver: true,
+    }).start();
+  }
+
+  if (isMobile) {
+    return (
+      <Pressable style={[estilos.arqCard, estilos.arqCardMobile]} onPress={() => setAberto((v) => !v)}>
+        <View style={estilos.arqCardIcone}>
+          <Ionicons name={item.icone} size={20} color="#208AEF" />
+        </View>
+        <Text style={estilos.arqCardRotulo}>{item.titulo}</Text>
+        <Text style={estilos.arqCardTagline}>{item.tagline}</Text>
+        {aberto && <Text style={estilos.arqCardDescricao}>{item.descricao}</Text>}
+        <View style={estilos.arqCardHintRow}>
+          <Text style={estilos.arqCardHint}>{aberto ? 'Tocar para recolher' : 'Tocar para ver mais'}</Text>
+          <Ionicons name={aberto ? 'chevron-up-outline' : 'chevron-down-outline'} size={14} color="#208AEF" />
+        </View>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable style={estilos.arqCard} onHoverIn={() => revelar(true)} onHoverOut={() => revelar(false)}>
+      <View style={estilos.arqCardIcone}>
+        <Ionicons name={item.icone} size={20} color="#208AEF" />
+      </View>
+      <Text style={estilos.arqCardRotulo}>{item.titulo}</Text>
+      <Text style={estilos.arqCardTagline}>{item.tagline}</Text>
+      <View style={estilos.arqCardHintRow}>
+        <Text style={estilos.arqCardHint}>Passe o mouse para ver</Text>
+        <Ionicons name="arrow-forward-outline" size={14} color="#208AEF" />
+      </View>
+
+      {/* Overlay com a descrição (fade no hover) */}
+      <Animated.View pointerEvents="none" style={[estilos.arqCardOverlay, { opacity: animOverlay }]}>
+        <Text style={estilos.arqCardRotulo}>{item.titulo}</Text>
+        <Text style={estilos.arqCardDescricao}>{item.descricao}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+function SecaoArquitetura() {
+  const { isMobile, height } = useBreakpoint();
+  return (
+    <View style={[estilos.secao04Wrapper, { minHeight: height }, isMobile && estilos.secao04WrapperMobile]}>
+
+      <View style={estilos.arqHeader}>
+        <Text style={estilos.arqRotulo}>ARQUITETURA DA SOLUÇÃO</Text>
+        <Text style={[estilos.arqTitulo, isMobile && estilos.arqTituloMobile]}>
+          O que está por baixo do capô.
+        </Text>
+        <Text style={estilos.arqTexto}>
+          O Orbital Academy não é um sistema monolítico. E sim uma arquitetura de oito componentes
+          integrados, cada um com papel preciso no ciclo de decisão. Retire qualquer peça e o ciclo para.
+          {'\n\n'}
+        </Text>
+      </View>
+
+      <View style={[estilos.arqGrid, isMobile && estilos.arqGridMobile]}>
+        {componentesData.map((item) => (
+          <CardArquitetura key={item.id} item={item} isMobile={isMobile} />
+        ))}
       </View>
 
     </View>
@@ -474,7 +580,6 @@ export default function Home() {
               <SecaoPrincipal atraso={0} alturaJanela={height} />
             </View>
 
-            {/* Imagem — aparece abaixo da seção 02 */}
             <View style={[estilos.parallaxContainer, isMobile && estilos.parallaxContainerMobile]}>
               <Animated.Image
                 source={imgParallax}
@@ -501,10 +606,8 @@ export default function Home() {
                 ]}
               />
             </View>
-
-            {/* Seção 03 — Tese e Resultado */}
             <SecaoTese />
-
+            <SecaoArquitetura />
           </ScrollView>
         ) : (
           <View style={estilos.telaVazia}>
@@ -687,7 +790,7 @@ const estilos = StyleSheet.create({
     paddingBottom: 80,
   },
 
-  // Seção DOSSIÊ
+  // --- Seção 01 --- Dossie (Introdução)
   dossieContainer: {
     gap: 40,
   },
@@ -753,7 +856,7 @@ const estilos = StyleSheet.create({
     fontFamily: fonts.titleBold,
   },
 
-  // Seção 02 — layout dividido
+  // --- Seção 02 --- (Carrossel)
   secao02Layout: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -772,7 +875,6 @@ const estilos = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Carrossel
   carrosselOverflow: {
     overflow: 'hidden',
     flex: 1,
@@ -795,14 +897,6 @@ const estilos = StyleSheet.create({
   carrosselCardAtivo: {
     opacity: 1,
     borderColor: '#208AEF30',
-  },
-  carrosselCardBody: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#0a0f1a',
   },
   carrosselCardFooter: {
     position: 'absolute',
@@ -869,13 +963,13 @@ const estilos = StyleSheet.create({
     backgroundColor: '#208AEF',
   },
 
+  // --- Seção 03 (Personas, card flip ) ---
   secao03Wrapper: {
     marginTop: 160,
     paddingHorizontal: 64,
-    paddingBottom: 90,
+    paddingBottom: 48,
     gap: 40,
   },
-
 
   teseBodyText: {
     color: '#94A3B8',
@@ -883,11 +977,10 @@ const estilos = StyleSheet.create({
     fontFamily: fonts.body,
     lineHeight: 26,
   },
-  // Personas — blocos flip
   personasBlocos: {
     flexDirection: 'row',
     gap: 16,
-    height: 580,
+    height: 400,
   },
   personaFotoBloco: {
     flex: 1,
@@ -896,11 +989,10 @@ const estilos = StyleSheet.create({
   },
   personaFotoImg: {
     width: '100%',
-    height: '70%',
+    height: '100%',
     resizeMode: 'cover',
   },
 
-  // Card flip
   flipContainer: {
     flex: 1,
     height: 400,
@@ -954,7 +1046,136 @@ const estilos = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.bodySemiBold,
   },
+
+  // ---- Seção 04 ----
+  secao04Wrapper: {
+    justifyContent: 'center',
+    marginTop: 120,
+    paddingHorizontal: 64,
+    paddingVertical: 80,
+    gap: 48,
+  },
+  arqHeader: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: 760,
+    gap: 18,
+  },
+  arqRotulo: {
+    color: '#208AEF',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  arqTitulo: {
+    color: '#F1F5F9',
+    fontSize: 42,
+    fontFamily: fonts.titleBlack,
+    lineHeight: 54,
+    letterSpacing: -1,
+    textAlign: 'center',
+  },
+  arqTexto: {
+    color: '#64748B',
+    fontSize: 15,
+    fontFamily: fonts.body,
+    lineHeight: 28,
+    textAlign: 'center',
+    width: '100%',
+    maxWidth: 800,
+  },
+  arqGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 16,
+    width: '100%',
+    maxWidth: 1160,
+    alignSelf: 'center',
+  },
+  arqCard: {
+    width: '23%',
+    height: 500,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#0A0F1A',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ffffff0D',
+    padding: 24,
+    gap: 12,
+  },
+  arqCardIcone: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#208AEF30',
+    backgroundColor: '#208AEF10',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arqCardRotulo: {
+    color: '#E2E8F0',
+    fontSize: 17,
+    fontFamily: fonts.titleBold,
+  },
+  arqCardTagline: {
+    color: '#208AEF',
+    fontSize: 13,
+    fontFamily: fonts.bodySemiBold,
+    lineHeight: 18,
+  },
+  arqCardDescricao: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontFamily: fonts.body,
+    lineHeight: 20,
+  },
+  arqCardHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 'auto',
+  },
+  arqCardHint: {
+    color: '#208AEF',
+    fontSize: 12,
+    fontFamily: fonts.bodySemiBold,
+  },
+  arqCardOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0A0F1A',
+    borderRadius: 16,
+    padding: 24,
+    gap: 10,
+    justifyContent: 'center',
+  },
+
   // ---- Variantes mobile (< 1024px) ----
+  secao04WrapperMobile: {
+    paddingHorizontal: 20,
+    paddingVertical: 48,
+  },
+  arqTituloMobile: {
+    fontSize: 28,
+    lineHeight: 36,
+  },
+  arqGridMobile: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    maxWidth: '100%',
+  },
+  arqCardMobile: {
+    width: '100%',
+    height: 'auto',
+  },
   secao01WrapperMobile: {
     paddingHorizontal: 20,
     paddingBottom: 48,
@@ -1004,9 +1225,6 @@ const estilos = StyleSheet.create({
   },
   secao02DireitaMobile: {
     width: '100%',
-    // No layout em coluna o eixo principal vira vertical; sem altura definida o
-    // container (que herda flexBasis 0% do flex:1) colapsaria e o overflow:hidden
-    // esconderia o card. Fixamos a altura do card (400) aqui.
     height: 400,
   },
   secao03WrapperMobile: {
