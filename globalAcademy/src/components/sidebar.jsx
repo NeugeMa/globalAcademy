@@ -25,7 +25,7 @@ const secoes = [
   },
 ];
 
-export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, aoFechar }) {
+export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, aoFechar, logado = false, nome, aoSair }) {
   const { isMobile } = useBreakpoint();
 
   // Desktop: largura/opacidade animadas no hover.
@@ -44,7 +44,8 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
     }).start();
   }, [isMobile, aberto]);
 
-  function aoEntrar() {
+  // Expande a sidebar no hover (desktop).
+  function expandir() {
     Animated.parallel([
       Animated.timing(animLargura, {
         toValue: LARGURA_ABERTA,
@@ -61,7 +62,8 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
     ]).start();
   }
 
-  function aoSair() {
+  // Recolhe a sidebar ao sair com o mouse (desktop).
+  function recolher() {
     Animated.parallel([
       Animated.timing(animLargura, {
         toValue: LARGURA_FECHADA,
@@ -93,8 +95,8 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
       }
     : {
         style: [estilos.container, { width: animLargura }],
-        onMouseEnter: aoEntrar,
-        onMouseLeave: aoSair,
+        onMouseEnter: expandir,
+        onMouseLeave: recolher,
       };
 
   return (
@@ -175,18 +177,38 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
         ))}
       </View>
 
-      {/* Rodapé */}
+      {/* Rodapé — logado mostra usuário + sair; deslogado leva ao login */}
       <View style={estilos.rodape}>
         <View style={estilos.divisor} />
-        <Pressable style={estilos.linha}>
-          <View style={estilos.iconeSlot}>
-            <Ionicons name="log-in-outline" size={18} color="#64748B" />
-          </View>
-          <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
-            <Text style={estilos.loginTitulo} numberOfLines={1}>Faça login</Text>
-            <Text style={estilos.loginSub} numberOfLines={1}>Para acessar sua conta</Text>
-          </Animated.View>
-        </Pressable>
+        {logado ? (
+          <Pressable
+            style={({ pressed }) => [estilos.linha, pressed && estilos.linhaPressed]}
+            onPress={() => aoSair?.()}
+          >
+            <View style={estilos.iconeSlot}>
+              <Ionicons name="log-out-outline" size={18} color="#64748B" />
+            </View>
+            <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
+              <Text style={estilos.loginTitulo} numberOfLines={1}>
+                {nome ? `Olá, ${nome}!` : 'Olá, bem-vindo de volta!'}
+              </Text>
+              <Text style={estilos.loginSub} numberOfLines={1}>Sair da conta</Text>
+            </Animated.View>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [estilos.linha, pressed && estilos.linhaPressed]}
+            onPress={() => selecionar('login')}
+          >
+            <View style={estilos.iconeSlot}>
+              <Ionicons name="log-in-outline" size={18} color="#64748B" />
+            </View>
+            <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
+              <Text style={estilos.loginTitulo} numberOfLines={1}>Faça login</Text>
+              <Text style={estilos.loginSub} numberOfLines={1}>Para acessar sua conta</Text>
+            </Animated.View>
+          </Pressable>
+        )}
       </View>
     </Animated.View>
   );

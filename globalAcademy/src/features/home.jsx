@@ -13,8 +13,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../components/sidebar';
 import Console from './console';
+import Login from './login';
 import { fonts } from '../styles/fonts';
 import { useBreakpoint } from '../styles/breakpoint';
+import { lerSessao, limparSessao } from '../services/sessao';
 
 const imgParallax = require('../../assets/nasa-Q1p7bh3SHj8-unsplash.jpg');
 const imgPersonas = require('../../assets/premium_photo-1679756099079-84d8ab833a3f.avif');
@@ -599,20 +601,50 @@ function SecaoIntegrantes() {
 export default function Home() {
   const [ativo, setAtivo] = useState('home');
   const [menuAberto, setMenuAberto] = useState(false);
+  const [logado, setLogado] = useState(false);
+  const [nome, setNome] = useState('');
   const { height, isMobile } = useBreakpoint();
   const mostrarHome = ativo === 'home';
   const scrollRef = useRef(null);
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Ao abrir o app, restaura a sessão persistida (AsyncStorage), se houver.
+  useEffect(() => {
+    lerSessao().then((sessao) => {
+      if (sessao) {
+        setNome(sessao.nome ?? '');
+        setLogado(true);
+      }
+    });
+  }, []);
 
   function selecionar(chave) {
     setAtivo(chave);
     setMenuAberto(false);
   }
 
+  // Login (mock): destrava os estados "com login" e leva ao Console.
+  function aoEntrar(dados) {
+    setNome(dados?.nome ?? '');
+    setLogado(true);
+    setAtivo('console');
+  }
+
+  // Logout: limpa a sessão persistida e volta ao estado deslogado.
+  async function aoSair() {
+    await limparSessao();
+    setNome('');
+    setLogado(false);
+    setAtivo('home');
+    setMenuAberto(false);
+  }
+
   return (
     <View style={estilos.container}>
       {/* Desktop: sidebar fixa inline (expande no hover) */}
-      {!isMobile && <Sidebar ativo={ativo} aoSelecionar={setAtivo} />}
+      {!isMobile && (
+        <Sidebar ativo={ativo} aoSelecionar={setAtivo} logado={logado} nome={nome} aoSair={aoSair} />
+      )}
 
       <View style={estilos.conteudo}>
         <View style={estilos.fundoEspacial} pointerEvents="none">
@@ -708,8 +740,10 @@ export default function Home() {
             <SecaoArquitetura />
             <SecaoIntegrantes />
           </ScrollView>
+        ) : ativo === 'login' ? (
+          <Login aoEntrar={aoEntrar} aoVoltar={() => setAtivo('home')} />
         ) : ativo === 'console' ? (
-          <Console />
+          <Console logado={logado} />
         ) : (
           <View style={estilos.telaVazia}>
             <Text style={estilos.telaVaziaTexto}>{ativo}</Text>
@@ -728,6 +762,9 @@ export default function Home() {
             aoSelecionar={selecionar}
             aberto={menuAberto}
             aoFechar={() => setMenuAberto(false)}
+            logado={logado}
+            nome={nome}
+            aoSair={aoSair}
           />
         </>
       )}
