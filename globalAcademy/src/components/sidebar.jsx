@@ -11,7 +11,7 @@ const secoes = [
   {
     rotulo: 'OPERAÇÃO',
     itens: [
-      { chave: 'console', icone: 'terminal-outline', titulo: 'Console', subtitulo: 'Mapa + ranking', badge: 3 },
+      { chave: 'console', icone: 'terminal-outline', titulo: 'Console', subtitulo: 'Mapa + ranking' },
       { chave: 'missao', icone: 'settings-outline', titulo: 'Missão', subtitulo: 'Detalhe + otimizar' },
       { chave: 'camera', icone: 'camera-outline', titulo: 'Câmera', subtitulo: 'Validação campo' },
       { chave: 'indicadores', icone: 'trending-up-outline', titulo: 'Indicadores', subtitulo: 'Impacto + métricas' },
