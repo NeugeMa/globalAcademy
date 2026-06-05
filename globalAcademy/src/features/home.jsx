@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../components/sidebar';
-import Console from './console';
 import { fonts } from '../styles/fonts';
 import { useBreakpoint } from '../styles/breakpoint';
 
@@ -708,8 +707,6 @@ export default function Home() {
             <SecaoArquitetura />
             <SecaoIntegrantes />
           </ScrollView>
-        ) : ativo === 'console' ? (
-          <Console />
         ) : (
           <View style={estilos.telaVazia}>
             <Text style={estilos.telaVaziaTexto}>{ativo}</Text>
