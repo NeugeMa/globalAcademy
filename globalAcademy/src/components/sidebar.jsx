@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useBreakpoint } from '../styles/breakpoint';
+
+const logoSimbolo = require('../../assets/logo-simbolo.svg');
 
 const LARGURA_FECHADA = 56;
 const LARGURA_ABERTA = 240;
@@ -104,16 +106,12 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
       {/* Cabeçalho */}
       <Pressable style={estilos.linha} onPress={() => selecionar('home')}>
         <View style={estilos.iconeSlot}>
-          <View style={estilos.logoCirculo}>
-            <View style={estilos.logoPonto} />
-          </View>
+          <Image source={logoSimbolo} style={estilos.logoSimbolo} resizeMode="contain" />
         </View>
         <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
           <Text style={estilos.cabecalhoNome} numberOfLines={1}>Orbital Academy</Text>
           <Text style={estilos.cabecalhoSub} numberOfLines={1}>Engenharia de Software · 3º sem</Text>
           <View style={estilos.statusBadge}>
-            <View style={estilos.statusPonto} />
-            <Text style={estilos.statusTexto} numberOfLines={1}>Missão Agro · ativa</Text>
           </View>
         </Animated.View>
       </Pressable>
@@ -276,21 +274,9 @@ const estilos = StyleSheet.create({
   },
 
   // Logo
-  logoCirculo: {
+  logoSimbolo: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#334155',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoPonto: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: '#94A3B8',
   },
 
   // Cabeçalho
