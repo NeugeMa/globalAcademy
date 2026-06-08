@@ -11,8 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { fonts } from '../styles/fonts';
 import { useBreakpoint } from '../styles/breakpoint';
-import { autenticar, salvarSessao } from '../services/sessao';
-
+import { cadastrarUsuario, salvarSessao } from '../services/sessao';
 
 const estrelas = Array.from({ length: 40 }, (_, i) => ({
   id: i,
@@ -37,7 +36,7 @@ function Campo({ rotulo, icone, valor, aoMudar, placeholder, teclado, senha = fa
           placeholder={placeholder}
           placeholderTextColor="#475569"
           keyboardType={teclado}
-          autoCapitalize="none"
+          autoCapitalize={senha ? 'none' : 'words'}
           secureTextEntry={senha && !mostrar}
           onFocus={() => setFocado(true)}
           onBlur={() => setFocado(false)}
@@ -45,11 +44,7 @@ function Campo({ rotulo, icone, valor, aoMudar, placeholder, teclado, senha = fa
         />
         {senha && (
           <Pressable onPress={() => setMostrar((v) => !v)} hitSlop={8}>
-            <Ionicons
-              name={mostrar ? 'eye-off-outline' : 'eye-outline'}
-              size={17}
-              color="#64748B"
-            />
+            <Ionicons name={mostrar ? 'eye-off-outline' : 'eye-outline'} size={17} color="#64748B" />
           </Pressable>
         )}
       </View>
@@ -57,12 +52,13 @@ function Campo({ rotulo, icone, valor, aoMudar, placeholder, teclado, senha = fa
   );
 }
 
-export default function Login({ aoEntrar, aoVoltar, aoPedirCadastro }) {
+export default function Cadastro({ aoEntrar, aoVoltarLogin }) {
   const { isMobile } = useBreakpoint();
 
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [manterConectado, setManterConectado] = useState(true);
+  const [confirmar, setConfirmar] = useState('');
   const [erro, setErro] = useState('');
 
   const animX = useRef(new Animated.Value(-64)).current;
@@ -75,16 +71,22 @@ export default function Login({ aoEntrar, aoVoltar, aoPedirCadastro }) {
     ]).start();
   }, []);
 
-  // Autentica (credencial de teste ou usuário cadastrado) e persiste a sessão.
-  async function entrar() {
-    const usuario = await autenticar(email, senha);
-    if (!usuario) {
-      setErro('E-mail ou senha inválidos.');
-      return;
-    }
+  function ligar(setter) {
+    return (v) => { setter(v); if (erro) setErro(''); };
+  }
+
+  async function cadastrar() {
+    if (!nome.trim()) return setErro('Informe seu nome.');
+    if (!email.includes('@')) return setErro('Informe um e-mail válido.');
+    if (senha.length < 6) return setErro('A senha precisa de ao menos 6 caracteres.');
+    if (senha !== confirmar) return setErro('As senhas não conferem.');
+
+    const res = await cadastrarUsuario({ nome, email, senha });
+    if (!res.ok) return setErro(res.erro);
+
     setErro('');
-    if (manterConectado) await salvarSessao(usuario);
-    aoEntrar?.(usuario);
+    await salvarSessao(res.usuario);
+    aoEntrar?.(res.usuario);
   }
 
   return (
@@ -117,16 +119,23 @@ export default function Login({ aoEntrar, aoVoltar, aoPedirCadastro }) {
           { opacity: animOp, transform: [{ translateX: animX }] },
         ]}
       >
-        <Text style={estilos.eyebrow}>ACESSO · USUÁRIO</Text>
-        <Text style={estilos.titulo}>Entrar nesta Missão?</Text>
-        <Text style={estilos.subtitulo}>Use suas credenciais da missão para continuar.</Text>
+        <Text style={estilos.eyebrow}>ACESSO · NOVO CADASTRO</Text>
+        <Text style={estilos.titulo}>Criar sua conta</Text>
+        <Text style={estilos.subtitulo}>Cadastre-se para operar as missões do Orbital Academy.</Text>
 
         <View style={estilos.form}>
+          <Campo
+            rotulo="Nome"
+            icone="person-outline"
+            valor={nome}
+            aoMudar={ligar(setNome)}
+            placeholder="Seu nome"
+          />
           <Campo
             rotulo="E-mail"
             icone="mail-outline"
             valor={email}
-            aoMudar={(v) => { setEmail(v); if (erro) setErro(''); }}
+            aoMudar={ligar(setEmail)}
             placeholder="nome@teste.com"
             teclado="email-address"
           />
@@ -134,8 +143,16 @@ export default function Login({ aoEntrar, aoVoltar, aoPedirCadastro }) {
             rotulo="Senha"
             icone="lock-closed-outline"
             valor={senha}
-            aoMudar={(v) => { setSenha(v); if (erro) setErro(''); }}
-            placeholder="••••••••"
+            aoMudar={ligar(setSenha)}
+            placeholder="Mínimo 6 caracteres"
+            senha
+          />
+          <Campo
+            rotulo="Confirmar senha"
+            icone="lock-closed-outline"
+            valor={confirmar}
+            aoMudar={ligar(setConfirmar)}
+            placeholder="Repita a senha"
             senha
           />
 
@@ -146,30 +163,18 @@ export default function Login({ aoEntrar, aoVoltar, aoPedirCadastro }) {
             </View>
           ) : null}
 
-          <View style={estilos.opcoes}>
-            <Pressable style={estilos.checkboxLinha} onPress={() => setManterConectado((v) => !v)}>
-              <View style={[estilos.checkbox, manterConectado && estilos.checkboxAtivo]}>
-                {manterConectado && <Ionicons name="checkmark" size={13} color="#050810" />}
-              </View>
-              <Text style={estilos.checkboxTexto}>Manter conectado</Text>
-            </Pressable>
-            <Pressable hitSlop={6}>
-              <Text style={estilos.link}>Esqueci a senha</Text>
-            </Pressable>
-          </View>
-
           <Pressable
             style={({ pressed }) => [estilos.btnPrimario, pressed && estilos.btnPrimarioPressed]}
-            onPress={entrar}
+            onPress={cadastrar}
           >
-            <Text style={estilos.btnPrimarioTexto}>Acessar console</Text>
+            <Text style={estilos.btnPrimarioTexto}>Criar conta</Text>
             <Ionicons name="arrow-forward-outline" size={18} color="#050810" />
           </Pressable>
 
           <View style={estilos.rodape}>
-            <Text style={estilos.rodapeTexto}>Primeiro acesso? </Text>
-            <Pressable hitSlop={6} onPress={() => aoPedirCadastro?.()}>
-              <Text style={estilos.link}>Criar conta</Text>
+            <Text style={estilos.rodapeTexto}>Já tem conta? </Text>
+            <Pressable hitSlop={6} onPress={() => aoVoltarLogin?.()}>
+              <Text style={estilos.link}>Entrar</Text>
             </Pressable>
           </View>
         </View>
@@ -269,43 +274,7 @@ const estilos = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 14,
     fontFamily: fonts.body,
-    outlineStyle: 'none', 
-  },
-
-  // --- Manter conectado + link ---
-  opcoes: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  checkboxLinha: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#ffffff25',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxAtivo: {
-    backgroundColor: '#38BDF8',
-    borderColor: '#38BDF8',
-  },
-  checkboxTexto: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontFamily: fonts.body,
-  },
-  link: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontFamily: fonts.bodySemiBold,
+    outlineStyle: 'none',
   },
 
   // --- Botão primário ---
@@ -346,6 +315,13 @@ const estilos = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.body,
     lineHeight: 18,
+  },
+
+  // --- Link ---
+  link: {
+    color: '#38BDF8',
+    fontSize: 13,
+    fontFamily: fonts.bodySemiBold,
   },
 
   // --- Rodapé ---
