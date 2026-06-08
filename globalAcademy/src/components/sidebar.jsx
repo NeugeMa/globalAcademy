@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useBreakpoint } from '../styles/breakpoint';
+
+const logoSimbolo = require('../../assets/logo-simbolo.svg');
 
 const LARGURA_FECHADA = 56;
 const LARGURA_ABERTA = 240;
@@ -11,7 +13,7 @@ const secoes = [
   {
     rotulo: 'OPERAÇÃO',
     itens: [
-      { chave: 'console', icone: 'terminal-outline', titulo: 'Console', subtitulo: 'Mapa + ranking', badge: 3 },
+      { chave: 'console', icone: 'terminal-outline', titulo: 'Console', subtitulo: 'Mapa + ranking' },
       { chave: 'missao', icone: 'settings-outline', titulo: 'Missão', subtitulo: 'Detalhe + otimizar' },
       { chave: 'camera', icone: 'camera-outline', titulo: 'Câmera', subtitulo: 'Validação campo' },
       { chave: 'indicadores', icone: 'trending-up-outline', titulo: 'Indicadores', subtitulo: 'Impacto + métricas' },
@@ -25,7 +27,7 @@ const secoes = [
   },
 ];
 
-export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, aoFechar }) {
+export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, aoFechar, logado = false, nome, aoSair }) {
   const { isMobile } = useBreakpoint();
 
   // Desktop: largura/opacidade animadas no hover.
@@ -44,7 +46,8 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
     }).start();
   }, [isMobile, aberto]);
 
-  function aoEntrar() {
+  // Expande a sidebar no hover (desktop).
+  function expandir() {
     Animated.parallel([
       Animated.timing(animLargura, {
         toValue: LARGURA_ABERTA,
@@ -61,7 +64,8 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
     ]).start();
   }
 
-  function aoSair() {
+  // Recolhe a sidebar ao sair com o mouse (desktop).
+  function recolher() {
     Animated.parallel([
       Animated.timing(animLargura, {
         toValue: LARGURA_FECHADA,
@@ -93,8 +97,8 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
       }
     : {
         style: [estilos.container, { width: animLargura }],
-        onMouseEnter: aoEntrar,
-        onMouseLeave: aoSair,
+        onMouseEnter: expandir,
+        onMouseLeave: recolher,
       };
 
   return (
@@ -102,16 +106,12 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
       {/* Cabeçalho */}
       <Pressable style={estilos.linha} onPress={() => selecionar('home')}>
         <View style={estilos.iconeSlot}>
-          <View style={estilos.logoCirculo}>
-            <View style={estilos.logoPonto} />
-          </View>
+          <Image source={logoSimbolo} style={estilos.logoSimbolo} resizeMode="contain" />
         </View>
         <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
           <Text style={estilos.cabecalhoNome} numberOfLines={1}>Orbital Academy</Text>
           <Text style={estilos.cabecalhoSub} numberOfLines={1}>Engenharia de Software · 3º sem</Text>
           <View style={estilos.statusBadge}>
-            <View style={estilos.statusPonto} />
-            <Text style={estilos.statusTexto} numberOfLines={1}>Missão Agro · ativa</Text>
           </View>
         </Animated.View>
       </Pressable>
@@ -175,18 +175,38 @@ export default function Sidebar({ ativo = 'home', aoSelecionar, aberto = false, 
         ))}
       </View>
 
-      {/* Rodapé */}
+      {/* Rodapé — logado mostra usuário + sair; deslogado leva ao login */}
       <View style={estilos.rodape}>
         <View style={estilos.divisor} />
-        <Pressable style={estilos.linha}>
-          <View style={estilos.iconeSlot}>
-            <Ionicons name="log-in-outline" size={18} color="#64748B" />
-          </View>
-          <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
-            <Text style={estilos.loginTitulo} numberOfLines={1}>Faça login</Text>
-            <Text style={estilos.loginSub} numberOfLines={1}>Para acessar sua conta</Text>
-          </Animated.View>
-        </Pressable>
+        {logado ? (
+          <Pressable
+            style={({ pressed }) => [estilos.linha, pressed && estilos.linhaPressed]}
+            onPress={() => aoSair?.()}
+          >
+            <View style={estilos.iconeSlot}>
+              <Ionicons name="log-out-outline" size={18} color="#64748B" />
+            </View>
+            <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
+              <Text style={estilos.loginTitulo} numberOfLines={1}>
+                {nome ? `Olá, ${nome}!` : 'Olá, bem-vindo de volta!'}
+              </Text>
+              <Text style={estilos.loginSub} numberOfLines={1}>Sair da conta</Text>
+            </Animated.View>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [estilos.linha, pressed && estilos.linhaPressed]}
+            onPress={() => selecionar('login')}
+          >
+            <View style={estilos.iconeSlot}>
+              <Ionicons name="log-in-outline" size={18} color="#64748B" />
+            </View>
+            <Animated.View style={[estilos.textoSlot, { opacity: opacidadeTexto }]}>
+              <Text style={estilos.loginTitulo} numberOfLines={1}>Faça login</Text>
+              <Text style={estilos.loginSub} numberOfLines={1}>Para acessar sua conta</Text>
+            </Animated.View>
+          </Pressable>
+        )}
       </View>
     </Animated.View>
   );
@@ -254,21 +274,9 @@ const estilos = StyleSheet.create({
   },
 
   // Logo
-  logoCirculo: {
+  logoSimbolo: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#334155',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoPonto: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: '#94A3B8',
   },
 
   // Cabeçalho
