@@ -15,14 +15,17 @@ const GATE_TEXTO = 'Opa, parece que você não está logado! \nFaça novamente o
 const GATE_BOTAO = 'Fazer Login';
 const GATE_LINK = 'Não possui cadastro? Clique Aqui!';
 
-export function CabecalhoTela({ pagina, isMobile, direita }) {
+export function CabecalhoTela({ pagina, isMobile, sub, direita }) {
   const info = PAGINAS[pagina] ?? {};
   return (
     <View style={estilos.cabecalho}>
       <View style={estilos.tituloIcone}>
         <Ionicons name={info.icone} size={20} color="#38BDF8" />
       </View>
-      <Text style={[estilos.tituloPagina, isMobile && estilos.tituloPaginaMobile]}>{info.titulo}</Text>
+      <View style={estilos.tituloBloco}>
+        <Text style={[estilos.tituloPagina, isMobile && estilos.tituloPaginaMobile]}>{info.titulo}</Text>
+        {sub ? <Text style={estilos.tituloSub}>{sub}</Text> : null}
+      </View>
       {direita ? <View style={estilos.cabecalhoDireita}>{direita}</View> : null}
     </View>
   );
@@ -89,12 +92,18 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  tituloBloco: { gap: 2 },
   tituloPagina: {
     color: '#F1F5F9',
     fontSize: 26,
     fontFamily: fonts.titleBold,
   },
   tituloPaginaMobile: { fontSize: 21 },
+  tituloSub: {
+    color: '#64748B',
+    fontSize: 12,
+    fontFamily: fonts.body,
+  },
 
   area: {
     flex: 1,
